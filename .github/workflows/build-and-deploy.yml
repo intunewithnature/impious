@@ -1,11 +1,9 @@
 name: build-and-deploy
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
-# Top-level perms so GHCR pushes work
 permissions:
   contents: read
   packages: write
@@ -15,30 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Show workspace
         run: |
           set -e
           echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
           echo "::group::ls-root"; ls -la; echo "::endgroup::"
-          echo "::group::ls-lore"; ls -la lore-site || true; echo "::endgroup::"
-          echo "::group::ls-lore-site"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
-          echo "::group::ls-game"; ls -la game-api || true; echo "::endgroup::"
-          echo "::group::ls-game-api"; find game-api -maxdepth 1 -type f -print 2>/dev/null || true; echo "::endgroup::"
-
+          echo "::group::ls-lore"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+          echo "::group::ls-game"; find game-api -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+          echo "::group::ls-deploy"; find deploy -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
       - name: Verify required files exist
         run: |
           set -e
-          test -d lore-site                   || { echo "Missing directory: lore-site"; exit 1; }
-          test -f lore-site/Dockerfile        || { echo "Missing file: lore-site/Dockerfile"; exit 1; }
-          test -d lore-site/site              || { echo "Missing directory: lore-site/site"; exit 1; }
-          test -f lore-site/site/index.html   || { echo "Missing file: lore-site/site/index.html"; exit 1; }
-          test -d game-api                    || { echo "Missing directory: game-api"; exit 1; }
-          test -f game-api/Dockerfile         || { echo "Missing file: game-api/Dockerfile"; exit 1; }
-          test -f game-api/server.js          || { echo "Missing file: game-api/server.js"; exit 1; }
-          test -d deploy                      || { echo "Missing directory: deploy"; exit 1; }
-          test -f deploy/docker-compose.yml   || { echo "Missing file: deploy/docker-compose.yml"; exit 1; }
-          test -f deploy/Caddyfile            || { echo "Missing file: deploy/Caddyfile"; exit 1; }
+          test -f lore-site/Dockerfile               || { echo "Missing lore-site/Dockerfile"; exit 1; }
+          test -f lore-site/site/index.html          || { echo "Missing lore-site/site/index.html"; exit 1; }
+          test -f game-api/Dockerfile                || { echo "Missing game-api/Dockerfile"; exit 1; }
+          test -f game-api/server.js                 || { echo "Missing game-api/server.js"; exit 1; }
+          test -f deploy/docker-compose.yml          || { echo "Missing deploy/docker-compose.yml"; exit 1; }
+          test -f deploy/Caddyfile                   || { echo "Missing deploy/Caddyfile"; exit 1; }
           echo "Preflight passed."
 
   build:
@@ -60,21 +51,19 @@ jobs:
 
       - name: Build & push lore-site (latest + SHA)
         run: |
-          set -euo pipefail
-          TAG="ghcr.io/${{ github.repository_owner }}/lore-site"
-          SHA="${{ github.sha }}"
-          docker build -t "$TAG:latest" -t "$TAG:$SHA" ./lore-site
-          docker push "$TAG:latest"
-          docker push "$TAG:$SHA"
+          TAG=ghcr.io/${{ github.repository_owner }}/lore-site
+          SHA=${{ github.sha }}
+          docker build -t $TAG:latest -t $TAG:$SHA ./lore-site
+          docker push $TAG:latest
+          docker push $TAG:$SHA
 
       - name: Build & push werewolf-game (latest + SHA)
         run: |
-          set -euo pipefail
-          TAG="ghcr.io/${{ github.repository_owner }}/werewolf-game"
-          SHA="${{ github.sha }}"
-          docker build -t "$TAG:latest" -t "$TAG:$SHA" ./game-api
-          docker push "$TAG:latest"
-          docker push "$TAG:$SHA"
+          TAG=ghcr.io/${{ github.repository_owner }}/werewolf-game
+          SHA=${{ github.sha }}
+          docker build -t $TAG:latest -t $TAG:$SHA ./game-api
+          docker push $TAG:latest
+          docker push $TAG:$SHA
 
   deploy:
     needs: build
@@ -87,38 +76,26 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
-      - name: Ensure remote dir exists
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            'mkdir -p /opt/impious/deploy'
+      - name: Ensure remote dir
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
 
-      - name: Copy deploy files (Caddyfile + compose)
-        run: |
-          scp -o StrictHostKeyChecking=no -r deploy/* \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
+      - name: Copy deploy files
+        run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
 
-      # Optional guardrail: validate files and compose syntax ON THE SERVER
-      - name: Validate docker-compose syntax on server
+      - name: Validate server files (guardrail)
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-            set -euo pipefail
-            cd /opt/impious/deploy
-            test -f docker-compose.yml || { echo "docker-compose.yml missing on server"; exit 1; }
-            test -f Caddyfile || { echo "Caddyfile missing on server"; exit 1; }
-            # Show top to help future debugging
-            head -n 20 docker-compose.yml
-            head -n 20 Caddyfile
-            # Compose config check (tries v2 then v1)
-            (docker compose -f docker-compose.yml config >/dev/null) || (docker-compose -f docker-compose.yml config >/dev/null)
-            echo "Server-side compose config OK."
+            set -e
+            test -f /opt/impious/deploy/docker-compose.yml || { echo "Missing docker-compose.yml on server"; exit 1; }
+            test -f /opt/impious/deploy/Caddyfile        || { echo "Missing Caddyfile on server"; exit 1; }
+            echo "Server files present."
           '
 
       - name: Compose up on server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-            set -euo pipefail
+            set -e
             cd /opt/impious/deploy
             (docker compose pull || docker-compose pull)
             (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
-            (docker compose ps || docker-compose ps)
           '
