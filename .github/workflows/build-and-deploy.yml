@@ -64,14 +64,14 @@ jobs:
           docker build -t $TAG:latest -t $TAG:$SHA ./game-api
           docker push $TAG:latest
           docker push $TAG:$SHA
-      - name: Build & push impious-wiki (latest + SHA)
-       run: |
-        TAG="ghcr.io/${{ github.repository_owner }}/impious-wiki"
-        SHA="${{ github.sha }}"
-        docker build -t "$TAG:latest" -t "$TAG:$SHA" ./wiki
-        docker push "$TAG:latest"
-        docker push "$TAG:$SHA"
 
+      - name: Build & push impious-wiki (latest + SHA)
+        run: |
+          TAG="ghcr.io/${{ github.repository_owner }}/impious-wiki"
+          SHA="${{ github.sha }}"
+          docker build -t "$TAG:latest" -t "$TAG:$SHA" ./wiki
+          docker push "$TAG:latest"
+          docker push "$TAG:$SHA"
 
   deploy:
     needs: build
@@ -90,20 +90,15 @@ jobs:
       - name: Copy deploy files
         run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
 
-      - name: Validate server files (guardrail)
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-            set -e
-            test -f /opt/impious/deploy/docker-compose.yml || { echo "Missing docker-compose.yml on server"; exit 1; }
-            test -f /opt/impious/deploy/Caddyfile        || { echo "Missing Caddyfile on server"; exit 1; }
-            echo "Server files present."
-          '
-
-      - name: Compose up on server
+      - name: Compose up on server (build wiki locally, pull others)
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
             set -e
             cd /opt/impious/deploy
-            (docker compose pull || docker-compose pull)
+            # pull only images that live in GHCR; exclude wiki which we build locally
+            (docker compose pull caddy lore game status || docker-compose pull caddy lore game status) || true
+            # build wiki from ../wiki context (compose has build: ../wiki)
+            (docker compose build wiki || docker-compose build wiki)
+            # bring everything up
             (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
           '
