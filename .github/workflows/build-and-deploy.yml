@@ -2,14 +2,42 @@ name: build-and-deploy
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
-# top-level perms so we can push to GHCR
 permissions:
   contents: read
   packages: write
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show workspace
+        run: |
+          set -e
+          echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "::group::ls-root"; ls -la; echo "::endgroup::"
+          echo "::group::ls-lore"; ls -la lore-site || true; echo "::endgroup::"
+          echo "::group::ls-lore-site"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+          echo "::group::ls-game"; ls -la game-api || true; echo "::endgroup::"
+          echo "::group::ls-game-api"; find game-api -maxdepth 1 -type f -print 2>/dev/null || true; echo "::endgroup::"
+
+      - name: Verify required files exist (fail with clear reasons)
+        run: |
+          set -e
+          test -d lore-site                   || { echo "Missing directory: lore-site"; exit 1; }
+          test -f lore-site/Dockerfile        || { echo "Missing file: lore-site/Dockerfile"; exit 1; }
+          test -d lore-site/site              || { echo "Missing directory: lore-site/site"; exit 1; }
+          test -f lore-site/site/index.html   || { echo "Missing file: lore-site/site/index.html"; exit 1; }
+          test -d game-api                    || { echo "Missing directory: game-api"; exit 1; }
+          test -f game-api/Dockerfile         || { echo "Missing file: game-api/Dockerfile"; exit 1; }
+          test -f game-api/server.js          || { echo "Missing file: game-api/server.js"; exit 1; }
+          echo "Preflight passed."
+
   build:
+    needs: preflight
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
