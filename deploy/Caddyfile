@@ -1,0 +1,13 @@
+{
+  email jemail@gmail.com
+}
+
+impious.io {
+  encode gzip
+  reverse_proxy lore:80
+}
+
+game.impious.io {
+  encode gzip
+  reverse_proxy game:3000
+}
