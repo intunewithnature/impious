@@ -1,0 +1,49 @@
+name: build-and-deploy
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: intunewithnature
+          password: ${{ secrets.GHCR_PAT }}
+      - name: Show workspace (debug once)
+        run: |
+          pwd
+          ls -la
+          ls -la lore-site || true
+          ls -la game-api || true
+      - name: Build & push lore-site
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/lore-site:latest ./lore-site
+          docker push ghcr.io/${{ github.repository_owner }}/lore-site:latest
+      - name: Build & push game-api
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/werewolf-game:latest ./game-api
+          docker push ghcr.io/${{ github.repository_owner }}/werewolf-game:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+      - name: Ensure remote dir
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
+      - name: Copy deploy files
+        run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
+      - name: Compose up
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'cd /opt/impious/deploy && (docker-compose pull && docker-compose up -d --remove-orphans)'
