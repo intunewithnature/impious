@@ -16,3 +16,8 @@ status.impious.io {
   encode gzip
   reverse_proxy status:3001
 }
+
+wiki.impious.io {
+    encode gzip
+    reverse_proxy wiki:80
+}
