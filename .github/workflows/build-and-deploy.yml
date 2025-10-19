@@ -1,25 +1,62 @@
-deploy:
-  needs: build
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
+name: build-and-deploy
+on:
+  push:
+    branches: [ main ]
 
-    - name: Add SSH key
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-        ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+# top-level perms so we can push to GHCR
+permissions:
+  contents: read
+  packages: write
 
-    - name: Ensure remote dir
-      run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Copy deploy files
-      run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
+      - name: Validate GHCR_PAT is present
+        run: |
+          test -n "${{ secrets.GHCR_PAT }}" || { echo "GHCR_PAT secret is missing or empty"; exit 1; }
 
-    - name: Compose up
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-          set -e
-          cd /opt/impious/deploy
-          (docker compose pull || docker-compose pull)
-          (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
-        '
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: intunewithnature
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build & push lore-site
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/lore-site:latest ./lore-site
+          docker push ghcr.io/${{ github.repository_owner }}/lore-site:latest
+
+      - name: Build & push game-api
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/werewolf-game:latest ./game-api
+          docker push ghcr.io/${{ github.repository_owner }}/werewolf-game:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Ensure remote dir
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
+
+      - name: Copy deploy files
+        run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
+
+      - name: Compose up on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+            set -e
+            cd /opt/impious/deploy
+            (docker compose pull || docker-compose pull)
+            (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
+          '
