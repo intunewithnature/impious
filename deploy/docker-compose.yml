@@ -7,7 +7,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    depends_on: [ lore, game ]
+    depends_on: [ lore, game, status ]
     networks: [ web ]
 
   lore:
@@ -31,5 +31,17 @@ services:
       retries: 5
     networks: [ web ]
 
-networks: { web: {} }
-volumes: { caddy_data: {}, caddy_config: {} }
+  status:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma:/app/data
+    networks: [ web ]
+
+networks:
+  web: {}
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}
+  uptime_kuma: {}
