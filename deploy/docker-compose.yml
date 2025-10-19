@@ -1,0 +1,30 @@
+services:
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports: [ "80:80", "443:443" ]
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on: [ lore, game ]
+    networks: [ web ]
+
+  lore:
+    image: ghcr.io/intunewithnature/lore-site:latest
+    restart: unless-stopped
+    networks: [ web ]
+
+  game:
+    image: ghcr.io/intunewithnature/werewolf-game:latest
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks: [ web ]
+
+networks:
+  web:
+
+volumes:
+  caddy_data:
+  caddy_config:
