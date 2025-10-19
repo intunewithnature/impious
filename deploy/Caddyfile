@@ -11,3 +11,8 @@ game.impious.io {
   encode gzip
   reverse_proxy game:3000
 }
+
+status.impious.io {
+  encode gzip
+  reverse_proxy status:3001
+}
