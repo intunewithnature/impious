@@ -7,18 +7,14 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    depends_on:
-      lore:
-        condition: service_healthy
-      game:
-        condition: service_healthy
+    depends_on: [ lore, game ]
     networks: [ web ]
 
   lore:
     image: ghcr.io/intunewithnature/lore-site:latest
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL","wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -29,15 +25,11 @@ services:
     restart: unless-stopped
     environment: [ "NODE_ENV=production" ]
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/healthz"]
+      test: ["CMD","wget","-qO-","http://localhost:3000/healthz"]
       interval: 10s
       timeout: 3s
       retries: 5
     networks: [ web ]
 
-networks:
-  web: {}
-
-volumes:
-  caddy_data: {}
-  caddy_config: {}
+networks: { web: {} }
+volumes: { caddy_data: {}, caddy_config: {} }
