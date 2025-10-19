@@ -1,88 +1,39 @@
-name: build-and-deploy
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+services:
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports: [ "80:80", "443:443" ]
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on: [ lore, game ]
+    networks: [ web ]
 
-permissions:
-  contents: read
-  packages: write
+  lore:
+    image: ghcr.io/intunewithnature/lore-site:latest
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [ web ]
 
-jobs:
-  preflight:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Show workspace
-        run: |
-          set -e
-          echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
-          echo "::group::ls-root"; ls -la; echo "::endgroup::"
-          echo "::group::ls-lore"; ls -la lore-site || true; echo "::endgroup::"
-          echo "::group::ls-lore-files"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
-          echo "::group::ls-game"; ls -la game-api || true; echo "::endgroup::"
-          echo "::group::ls-game-files"; find game-api -maxdepth 1 -type f -print 2>/dev/null || true; echo "::endgroup::"
-      - name: Verify required files exist
-        run: |
-          set -e
-          test -d lore-site                 || { echo "Missing directory: lore-site"; exit 1; }
-          test -f lore-site/Dockerfile      || { echo "Missing file: lore-site/Dockerfile"; exit 1; }
-          test -d lore-site/site            || { echo "Missing directory: lore-site/site"; exit 1; }
-          test -f lore-site/site/index.html || { echo "Missing file: lore-site/site/index.html"; exit 1; }
-          test -d game-api                  || { echo "Missing directory: game-api"; exit 1; }
-          test -f game-api/Dockerfile       || { echo "Missing file: game-api/Dockerfile"; exit 1; }
-          test -f game-api/server.js        || { echo "Missing file: game-api/server.js"; exit 1; }
-          echo "Preflight passed."
+  game:
+    image: ghcr.io/intunewithnature/werewolf-game:latest
+    restart: unless-stopped
+    environment: [ "NODE_ENV=production" ]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [ web ]
 
-  build:
-    needs: preflight
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate GHCR_PAT is present
-        run: test -n "${{ secrets.GHCR_PAT }}" || { echo "GHCR_PAT secret is missing or empty"; exit 1; }
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: intunewithnature
-          password: ${{ secrets.GHCR_PAT }}
-      - name: Build & push lore-site
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/lore-site:latest ./lore-site
-          docker push ghcr.io/${{ github.repository_owner }}/lore-site:latest
-      - name: Build & push game-api
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/werewolf-game:latest ./game-api
-          docker push ghcr.io/${{ github.repository_owner }}/werewolf-game:latest
+networks:
+  web: {}
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Add SSH key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-      - name: Ensure remote dir
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
-      - name: Copy deploy files
-      - name: Validate docker-compose syntax on server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-            set -e
-            cd /opt/impious/deploy
-            # Prefer docker compose; fall back to docker-compose if needed
-            (docker compose version >/dev/null 2>&1 && docker compose config -q) || docker-compose -f docker-compose.yml config -q
-          '
-
-        run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
-      - name: Compose up on server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-            set -e
-            cd /opt/impious/deploy
-            (docker compose pull || docker-compose pull)
-            (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
-          '
+volumes:
+  caddy_data: {}
+  caddy_config: {}
