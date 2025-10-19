@@ -7,7 +7,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    depends_on: [ lore, game, status ]
+    depends_on: [ lore, game, status, wiki ]
     networks: [ web ]
 
   lore:
@@ -37,8 +37,11 @@ services:
     volumes:
       - uptime_kuma:/app/data
     networks: [ web ]
-    
+
   wiki:
+    # Build locally from repo's wiki/ directory so we don't need GHCR yet
+    build:
+      context: ../wiki
     image: ghcr.io/intunewithnature/impious-wiki:latest
     restart: unless-stopped
     healthcheck:
@@ -46,7 +49,8 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
-    networks: [ web ]
+    networks:
+      - web
 
 networks:
   web: {}
