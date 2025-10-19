@@ -64,6 +64,14 @@ jobs:
           docker build -t $TAG:latest -t $TAG:$SHA ./game-api
           docker push $TAG:latest
           docker push $TAG:$SHA
+      - name: Build & push impious-wiki (latest + SHA)
+       run: |
+        TAG="ghcr.io/${{ github.repository_owner }}/impious-wiki"
+        SHA="${{ github.sha }}"
+        docker build -t "$TAG:latest" -t "$TAG:$SHA" ./wiki
+        docker push "$TAG:latest"
+        docker push "$TAG:$SHA"
+
 
   deploy:
     needs: build
