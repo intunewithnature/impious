@@ -68,6 +68,15 @@ jobs:
       - name: Ensure remote dir
         run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
       - name: Copy deploy files
+      - name: Validate docker-compose syntax on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+            set -e
+            cd /opt/impious/deploy
+            # Prefer docker compose; fall back to docker-compose if needed
+            (docker compose version >/dev/null 2>&1 && docker compose config -q) || docker-compose -f docker-compose.yml config -q
+          '
+
         run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
       - name: Compose up on server
         run: |
