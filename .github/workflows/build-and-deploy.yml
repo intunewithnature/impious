@@ -4,43 +4,29 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build & push lore-site
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/lore-site:latest ./lore-site
-          docker push ghcr.io/${{ github.repository_owner }}/lore-site:latest
-      - name: Build & push game-api
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/werewolf-game:latest ./game-api
-          docker push ghcr.io/${{ github.repository_owner }}/werewolf-game:latest
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-      - name: Ensure remote dir
+
+      - name: Create remote dir
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/app'
+
+      - name: Rsync project to server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
-      - name: Copy deploy files
+          rsync -az --delete \
+            --exclude '.git/' --exclude '.github/' \
+            ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/app/
+
+      - name: Compose up (build on server)
         run: |
-          scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
-      - name: Compose up
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            'cd /opt/impious/deploy && (docker-compose pull && docker-compose up -d --remove-orphans)'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+            cd /opt/impious/app/deploy &&
+            (docker compose build || docker-compose build) &&
+            (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
+          '
