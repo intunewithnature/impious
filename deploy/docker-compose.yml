@@ -37,6 +37,16 @@ services:
     volumes:
       - uptime_kuma:/app/data
     networks: [ web ]
+    
+  wiki:
+    image: ghcr.io/intunewithnature/impious-wiki:latest
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [ web ]
 
 networks:
   web: {}
