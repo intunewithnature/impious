@@ -32,7 +32,7 @@ jobs:
           test -f lore/Dockerfile                    || { echo "Missing lore/Dockerfile"; exit 1; }
           test -f lore-wiki/tiddlywiki.info          || { echo "Missing lore-wiki/tiddlywiki.info"; exit 1; }
           test -f game-api/Dockerfile                || { echo "Missing game-api/Dockerfile"; exit 1; }
-          test -f game-api/server.js                 || { echo "Missing game-api/server.js"; exit 1; }
+                         test -f game-api/src/index.ts          || { echo "Missing game-api/src/index.ts"; exit 1; }
           test -f deploy/docker-compose.yml          || { echo "Missing deploy/docker-compose.yml"; exit 1; }
           test -f deploy/Caddyfile                   || { echo "Missing deploy/Caddyfile"; exit 1; }
           echo "Preflight passed."

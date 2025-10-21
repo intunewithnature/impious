@@ -1,0 +1,53 @@
+site_name: Impious Lorebook
+site_url: https://wiki.impious.io
+repo_url: https://github.com/intunewithnature/impious
+repo_name: intunewithnature/impious
+edit_uri: edit/main/wiki/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: black
+      accent: red
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+    - toc.integrate
+
+plugins:
+  - search
+  - tags
+  - git-revision-date-localized:
+      fallback_to_build_date: true
+
+markdown_extensions:
+  - admonition
+  - footnotes
+  - def_list
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.emoji
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Factions: factions/index.md
+  - Characters: characters/index.md
+  - Locations: locations/index.md
+  - Timeline: timeline.md
+  - Rules & Mechanics: rules.md
+  - Bestiary: bestiary.md
+  - Glossary: glossary.md
+  - Session Logs: session-logs.md
+  - Tags: tags.md
+
+extra_css:
+  - assets/css/overrides.css
