@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Werewolf Test</title></head>
+  <body>
+    <h1>Werewolf Test</h1>
+    <div>
+      <input id="name" placeholder="Your name">
+      <button id="create">Create Lobby</button>
+      <input id="lobby" placeholder="Lobby ID">
+      <button id="join">Join Lobby</button>
+      <button id="start">Start</button>
+      <button id="endday">End Day</button>
+      <button id="endnight">End Night</button>
+    </div>
+    <div>
+      <input id="target" placeholder="Target socketId">
+      <button id="vote">Vote</button>
+      <button id="wolf">Wolf target</button>
+      <button id="seer">Seer peek</button>
+      <button id="doc">Doctor protect</button>
+    </div>
+    <pre id="out"></pre>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+      const socket = io({ path: "/game/socket.io" });
+      const out = document.getElementById("out");
+      const log = (x) => { out.textContent = JSON.stringify(x, null, 2); };
+      socket.on("connect", () => console.log("connected", socket.id));
+      socket.on("lobby:update", log);
+      socket.on("game:phase", console.log);
+      socket.on("night:seer_result", console.log);
+      socket.on("error", e => console.error("server error:", e));
+
+      document.getElementById("create").onclick = () => {
+        socket.emit("lobby:create", { name: "Test", playerName: document.getElementById("name").value || "Player" });
+      };
+      document.getElementById("join").onclick = () => {
+        socket.emit("lobby:join", { lobbyId: document.getElementById("lobby").value.trim(), playerName: document.getElementById("name").value || "Player" });
+      };
+      document.getElementById("start").onclick = () => socket.emit("game:start");
+      document.getElementById("endday").onclick = () => socket.emit("day:end");
+      document.getElementById("endnight").onclick = () => socket.emit("night:end");
+      document.getElementById("vote").onclick = () => socket.emit("day:vote", { targetId: document.getElementById("target").value.trim() || undefined });
+      document.getElementById("wolf").onclick = () => socket.emit("night:action", { kind: "wolf", targetId: document.getElementById("target").value.trim() || undefined });
+      document.getElementById("seer").onclick = () => socket.emit("night:action", { kind: "seer", targetId: document.getElementById("target").value.trim() || undefined });
+      document.getElementById("doc").onclick = () => socket.emit("night:action", { kind: "doctor", targetId: document.getElementById("target").value.trim() || undefined });
+    </script>
+  </body>
+</html>
