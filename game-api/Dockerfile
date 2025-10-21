@@ -1,17 +1,18 @@
 # game-api/Dockerfile
+# Use this if your workflow uses: context: .  (repo root)
 
 # Build stage
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Install deps (use lockfile if present)
-COPY package.json package-lock.json* ./
+# Install dependencies
+COPY game-api/package.json game-api/package-lock.json* ./
 RUN npm ci || npm install
 
 # Copy source and build
-COPY tsconfig.json ./tsconfig.json
-COPY src ./src
-COPY public ./public
+COPY game-api/tsconfig.json ./tsconfig.json
+COPY game-api/src ./src
+COPY game-api/public ./public
 RUN npm run build
 
 # Runtime stage
@@ -27,7 +28,7 @@ COPY --from=build /app/public ./public
 
 EXPOSE 3000
 
-# Robust healthcheck without relying on wget/curl in busybox
+# Healthcheck using Node (no wget/curl dependency)
 HEALTHCHECK --interval=30s --timeout=5s --retries=5 \
   CMD node -e "require('http').get('http://127.0.0.1:3000/healthz',()=>process.exit(0)).on('error',()=>process.exit(1))"
 
