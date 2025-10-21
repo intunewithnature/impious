@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Show workspace
         run: |
           set -e
@@ -22,8 +23,9 @@ jobs:
           echo "::group::ls-lore-site"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-lore"; find lore -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-lore-wiki"; find lore-wiki -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
-          echo "::group::ls-game"; find game-api -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+          echo "::group::ls-game"; find game-api -maxdepth 3 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-deploy"; find deploy -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+
       - name: Verify required files exist
         run: |
           set -e
@@ -32,7 +34,8 @@ jobs:
           test -f lore/Dockerfile                    || { echo "Missing lore/Dockerfile"; exit 1; }
           test -f lore-wiki/tiddlywiki.info          || { echo "Missing lore-wiki/tiddlywiki.info"; exit 1; }
           test -f game-api/Dockerfile                || { echo "Missing game-api/Dockerfile"; exit 1; }
-                         test -f game-api/src/index.ts          || { echo "Missing game-api/src/index.ts"; exit 1; }
+          test -f game-api/src/index.ts              || { echo "Missing game-api/src/index.ts"; exit 1; }
+          test -f game-api/public/test.html          || { echo "Missing game-api/public/test.html"; exit 1; }
           test -f deploy/docker-compose.yml          || { echo "Missing deploy/docker-compose.yml"; exit 1; }
           test -f deploy/Caddyfile                   || { echo "Missing deploy/Caddyfile"; exit 1; }
           echo "Preflight passed."
@@ -58,22 +61,29 @@ jobs:
           username: intunewithnature
           password: ${{ secrets.GHCR_PAT }}
 
+      # Build & push lore-site using classic docker CLI (kept as-is)
       - name: Build & push lore-site (latest + SHA)
         run: |
+          set -e
           TAG=ghcr.io/${{ github.repository_owner }}/lore-site
           SHA=${{ github.sha }}
           docker build -t $TAG:latest -t $TAG:$SHA ./lore-site
           docker push $TAG:latest
           docker push $TAG:$SHA
 
+      # FIXED: Build & push werewolf-game with context=./game-api and file=./game-api/Dockerfile
       - name: Build & push werewolf-game (latest + SHA)
-        run: |
-          TAG=ghcr.io/${{ github.repository_owner }}/werewolf-game
-          SHA=${{ github.sha }}
-          docker build -t $TAG:latest -t $TAG:$SHA ./game-api
-          docker push $TAG:latest
-          docker push $TAG:$SHA
+        uses: docker/build-push-action@v6
+        with:
+          context: ./game-api
+          file: ./game-api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/werewolf-game:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/werewolf-game:${{ steps.vars.outputs.sha_short }}
+            ghcr.io/${{ github.repository_owner }}/werewolf-game:latest
 
+      # Build & push impious-lore via build-push-action (kept)
       - name: Build & push impious-lore (latest + short SHA)
         uses: docker/build-push-action@v6
         with:
