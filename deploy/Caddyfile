@@ -1,23 +1,47 @@
 {
-  email jemail@gmail.com
+    email {$CADDY_ADMIN_EMAIL:jemail@gmail.com}
+}
+
+(securityHeaders) {
+  header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  header X-Content-Type-Options "nosniff"
+  header X-Frame-Options "DENY"
+  header Referrer-Policy "no-referrer"
+}
+
+www.impious.io {
+  redir https://impious.io{uri}
 }
 
 impious.io {
+      handle_path /game* {
+        reverse_proxy game:3000
+      }
+  import securityHeaders
   encode gzip
+
+  # Serve TiddlyWiki on /lore
+  handle_path /lore* {
+    reverse_proxy lore:80
+  }
+
+  # Optional: redirect /wiki -> /lore
+  handle_path /wiki* {
+    redir /lore{uri} 308
+  }
+
+  # Default site root remains the lore site
   reverse_proxy lore:80
 }
 
 game.impious.io {
+  import securityHeaders
   encode gzip
   reverse_proxy game:3000
 }
 
 status.impious.io {
-  encode gzip
-  reverse_proxy status:3001
-}
-
-wiki.impious.io {
-    encode gzip
-    reverse_proxy wiki:80
+  import securityHeaders
+  root * /srv/status
+  file_server
 }
