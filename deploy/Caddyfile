@@ -14,11 +14,13 @@ www.impious.io {
 }
 
 impious.io {
-      handle_path /game* {
-        reverse_proxy game:3000
-      }
   import securityHeaders
   encode gzip
+
+  # Serve Werewolf Socket.IO at /game
+  handle_path /game* {
+    reverse_proxy game:3000
+  }
 
   # Serve TiddlyWiki on /lore
   handle_path /lore* {

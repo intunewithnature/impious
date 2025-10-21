@@ -1,0 +1,5 @@
+{
+  "description": "Impious in-game lore",
+  "plugins": ["tiddlywiki/tiddlyweb", "tiddlywiki/filesystem"],
+  "themes": ["tiddlywiki/vanilla", "tiddlywiki/snowwhite"]
+}

@@ -1,0 +1,4 @@
+title: Tags
+type: text/vnd.tiddlywiki
+
+<<list-links "[all[tiddlers]!is[system]tags[]]">>
