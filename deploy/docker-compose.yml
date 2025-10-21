@@ -9,12 +9,11 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./status:/srv/status:ro
     depends_on:
       lore:
         condition: service_healthy
       game:
-        condition: service_healthy
-      status:
         condition: service_healthy
       wiki:
         condition: service_healthy
@@ -57,18 +56,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  status:
-    image: louislam/uptime-kuma:1
-    restart: unless-stopped
-    volumes:
-      - uptime_kuma:/app/data
-    networks: [ web ]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
   wiki:
     build:
       context: ../wiki
@@ -92,4 +79,3 @@ networks:
 volumes:
   caddy_data: {}
   caddy_config: {}
-  uptime_kuma: {}
