@@ -20,8 +20,6 @@ jobs:
           echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
           echo "::group::ls-root"; ls -la; echo "::endgroup::"
           echo "::group::ls-game"; find game-api -maxdepth 3 -type f -print 2>/dev/null || true; echo "::endgroup::"
-          echo "::group::ls-lore-site"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
-          echo "::group::ls-lore"; find lore -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-deploy"; find deploy -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
       - name: Verify required files exist
         run: |
@@ -54,7 +52,7 @@ jobs:
           username: intunewithnature
           password: ${{ secrets.GHCR_PAT }}
 
-      # lore-site via classic CLI (kept)
+      # Build & push lore-site (classic CLI)
       - name: Build & push lore-site (latest + SHA)
         run: |
           set -e
@@ -64,24 +62,18 @@ jobs:
           docker push $TAG:latest
           docker push $TAG:$SHA
 
-      # WEREWOLF — build from ROOT with explicit Dockerfile
+      # Build & push werewolf-game from root using explicit Dockerfile path
       - name: Build & push werewolf-game (latest + SHA)
         run: |
           set -e
           TAG=ghcr.io/${{ github.repository_owner }}/werewolf-game
           SHA=${{ github.sha }}
-          echo "==> Building werewolf-game from repo root using Dockerfile: game-api/Dockerfile"
-          echo "PWD: $(pwd)"; ls -la; echo "----"; ls -la game-api || true
-          docker build \
-            --file game-api/Dockerfile \
-            --tag $TAG:latest \
-            --tag $TAG:$SHA \
-            .
-          echo "==> Pushing werewolf-game"
+          echo "==> Building werewolf-game from repo root"
+          docker build --file game-api/Dockerfile -t $TAG:latest -t $TAG:$SHA .
           docker push $TAG:latest
           docker push $TAG:$SHA
 
-      # impious-lore via build-push-action (kept)
+      # Build & push impious-lore via build-push-action
       - name: Build & push impious-lore (latest + short SHA)
         uses: docker/build-push-action@v6
         with:

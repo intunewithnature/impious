@@ -38,6 +38,7 @@ export class LobbyManager {
 
   leave(lobby: Lobby, playerId: string) {
     delete lobby.players[playerId];
+    // if host left, pass host to first remaining player
     if (lobby.hostId === playerId) {
       const next = Object.keys(lobby.players)[0];
       if (next) lobby.hostId = next;
@@ -48,7 +49,7 @@ export class LobbyManager {
     const count = Object.values(lobby.players).length;
     if (count < 4) throw new Error("Need at least 4 players");
     this.assignRoles(lobby);
-    lobby.phase = "night";
+    lobby.phase = "night"; // classic starts at night
     lobby.day = 0;
     lobby.votes = {};
     lobby.nightActions = {};
@@ -56,12 +57,14 @@ export class LobbyManager {
 
   private assignRoles(lobby: Lobby) {
     const players = Object.values(lobby.players);
+    // baseline ratios
     const wolves = Math.max(1, Math.floor(players.length / 4));
     const roles: Role[] = [];
     for (let i = 0; i < wolves; i++) roles.push("werewolf");
     roles.push("seer");
     roles.push("doctor");
     while (roles.length < players.length) roles.push("villager");
+    // shuffle
     for (let i = roles.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [roles[i], roles[j]] = [roles[j], roles[i]];
@@ -87,6 +90,7 @@ export class LobbyManager {
     for (const [pid, c] of Object.entries(counts)) {
       if (c > max) { max = c; best = pid; }
     }
+    // simple majority, tie = no lynch
     const alive = Object.values(lobby.players).filter(p => p.alive).length;
     if (best && max > Math.floor(alive / 2)) return best;
   }
@@ -97,6 +101,7 @@ export class LobbyManager {
       const victim = lobby.players[wolvesTarget];
       if (victim) victim.alive = false;
     }
+    // clear night actions
     lobby.nightActions = {};
   }
 
