@@ -107,7 +107,12 @@ jobs:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Ensure remote dir
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
+        run: |
+          TAG=ghcr.io/${{ github.repository_owner }}/werewolf-game
+          SHA=${{ github.sha }}
+          docker build -t $TAG:latest -t $TAG:$SHA . -f game-api/Dockerfile
+          docker push $TAG:latest
+          docker push $TAG:$SHA
 
       - name: Copy deploy files
         run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
