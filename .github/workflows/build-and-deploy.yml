@@ -83,6 +83,15 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/impious-lore:${{ steps.vars.outputs.sha_short }}
             ghcr.io/${{ github.repository_owner }}/impious-lore:latest
 
+        - name: Build & push impious-landing (latest + short SHA)
+          uses: docker/build-push-action@v6
+          with:
+            context: ./impious/landing
+            push: true
+            tags: |
+              ghcr.io/${{ github.repository_owner }}/impious-landing:${{ steps.vars.outputs.sha_short }}
+              ghcr.io/${{ github.repository_owner }}/impious-landing:latest
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -105,6 +114,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
             set -e
             cd /opt/impious/deploy
-            (docker compose pull caddy lore game status || docker-compose pull caddy lore game status) || true
+            (docker compose pull caddy lore game landing status || docker-compose pull caddy lore game landing landing status) || true
             (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
           '
