@@ -62,7 +62,7 @@ jobs:
           docker push $TAG:latest
           docker push $TAG:$SHA
 
-      # Build & push werewolf-game from root using explicit Dockerfile path
+      # Build & push werewolf-game from repo root using explicit Dockerfile path
       - name: Build & push werewolf-game (latest + SHA)
         run: |
           set -e
@@ -123,7 +123,6 @@ jobs:
             set -e
             cd /opt/impious/deploy
             (docker compose pull caddy lore game landing || docker-compose pull caddy lore game landing) || true
-
             (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
             (docker compose ps || docker-compose ps)
           "
