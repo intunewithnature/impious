@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Impious • Werewolf</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Social deduction. Wolves vs Town. Play Werewolf and browse the lore.">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="preload" href="/styles.css" as="style">
+  <link rel="stylesheet" href="/styles.css">
+  <meta property="og:title" content="Impious • Werewolf">
+  <meta property="og:description" content="Social deduction. Wolves vs Town. Play Werewolf and browse the lore.">
+  <meta property="og:type" content="website">
+</head>
+<body>
+  <header class="wrap">
+    <a class="brand" href="/"><img class="logo" src="/favicon.svg" alt=""> Impious</a>
+    <nav>
+      <a href="/game/test.html">Play</a>
+      <a href="/lore">Lore</a>
+      <a href="https://github.com/intunewithnature/impious" rel="noopener">Code</a>
+    </nav>
+  </header>
+
+  <main class="wrap hero">
+    <h1>Werewolf, the impious way</h1>
+    <p class="lead">Create a lobby, argue with your friends, and try not to get eaten.</p>
+    <div class="cta">
+      <a class="btn primary" href="/game/test.html">Play now</a>
+      <a class="btn" href="/lore">Read the lore</a>
+    </div>
+  </main>
+
+  <section class="wrap grid">
+    <article>
+      <h2>Fast lobbies</h2>
+      <p>Spin up a room and start a game in seconds. In-memory MVP, zero setup.</p>
+    </article>
+    <article>
+      <h2>Classic roles</h2>
+      <p>Villager, Werewolf, Seer, Doctor. Enough to hurt your friends' feelings.</p>
+    </article>
+    <article>
+      <h2>Living lore</h2>
+      <p>TiddlyWiki-powered world bible at <code>/lore</code>. Spoilers optional.</p>
+    </article>
+  </section>
+
+  <footer class="wrap foot">
+    <small>© <span id="y"></span> Impious</small>
+  </footer>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>

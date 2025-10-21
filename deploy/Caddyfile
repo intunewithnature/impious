@@ -33,7 +33,9 @@ impious.io {
   }
 
   # Default site root remains the lore site
-  reverse_proxy lore:80
+      handle {
+        reverse_proxy landing:80
+      }
 }
 
 game.impious.io {
