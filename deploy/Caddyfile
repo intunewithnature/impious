@@ -1,23 +1,38 @@
 {
-  email jemail@gmail.com
+  email {$CADDY_ADMIN_EMAIL:jemail@gmail.com}
+}
+
+(securityHeaders) {
+  header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  header X-Content-Type-Options "nosniff"
+  header X-Frame-Options "DENY"
+  header Referrer-Policy "no-referrer"
+}
+
+www.impious.io {
+  redir https://impious.io{uri}
 }
 
 impious.io {
+  import securityHeaders
   encode gzip
   reverse_proxy lore:80
 }
 
 game.impious.io {
+  import securityHeaders
   encode gzip
   reverse_proxy game:3000
 }
 
 status.impious.io {
+  import securityHeaders
   encode gzip
   reverse_proxy status:3001
 }
 
 wiki.impious.io {
-    encode gzip
-    reverse_proxy wiki:80
+  import securityHeaders
+  encode gzip
+  reverse_proxy wiki:80
 }
