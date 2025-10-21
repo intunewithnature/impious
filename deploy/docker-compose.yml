@@ -1,58 +1,57 @@
-version: "3.8"
+# docker-compose.yml (root: /opt/impious/deploy)
 
 services:
   caddy:
     image: caddy:2-alpine
+    container_name: deploy-caddy-1
     restart: unless-stopped
-    ports: [ "80:80", "443:443" ]
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./status:/srv/status:ro
-    depends_on:
-      lore:
-        condition: service_healthy
-      game:
-        condition: service_healthy
-    networks: [ web ]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    environment:
+      # Optional, if you use it inside your global Caddy block
+      - CADDY_ADMIN_EMAIL=${CADDY_ADMIN_EMAIL:-jemail@gmail.com}
+    networks:
+      - web
 
   lore:
     image: ghcr.io/intunewithnature/impious-lore:${GITHUB_SHA_SHORT:-latest}
+    container_name: deploy-lore-1
     restart: unless-stopped
+    expose:
+      - "80"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/index.html"]
+      test: ["CMD-SHELL","wget -qO- http://127.0.0.1:80/healthz || exit 1"]
       interval: 30s
-      timeout: 3s
-      retries: 3
-    networks: [ web ]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - web
 
   game:
-    image: ghcr.io/intunewithnature/werewolf-game:${GAME_TAG:-latest}
+    image: ghcr.io/intunewithnature/werewolf-game:${GITHUB_SHA_SHORT:-latest}
+    container_name: deploy-game-1
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
+    expose:
+      - "3000"
+    # Use a Node inline probe to avoid BusyBox wget/curl quirks
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/healthz"]
-      interval: 10s
-      timeout: 3s
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('http').get('http://127.0.0.1:3000/healthz',()=>process.exit(0)).on('error',()=>process.exit(1))\""
+        ]
+      interval: 30s
+      timeout: 5s
       retries: 5
-    networks: [ web ]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      start_period: 20s
+    networks:
+      - web
 
 networks:
   web: {}
