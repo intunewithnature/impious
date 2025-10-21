@@ -15,8 +15,6 @@ services:
         condition: service_healthy
       game:
         condition: service_healthy
-      wiki:
-        condition: service_healthy
     networks: [ web ]
     logging:
       driver: "json-file"
@@ -25,13 +23,13 @@ services:
         max-file: "3"
 
   lore:
-    image: ghcr.io/intunewithnature/lore-site:${LORE_TAG:-latest}
+    image: ghcr.io/intunewithnature/impious-lore:${GITHUB_SHA_SHORT:-latest}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1"]
-      interval: 10s
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/index.html"]
+      interval: 30s
       timeout: 3s
-      retries: 5
+      retries: 3
     networks: [ web ]
     logging:
       driver: "json-file"
@@ -46,23 +44,6 @@ services:
       - NODE_ENV=production
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/healthz"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks: [ web ]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  wiki:
-    build:
-      context: ../wiki
-    image: ghcr.io/intunewithnature/impious-wiki:latest
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 10s
       timeout: 3s
       retries: 5
