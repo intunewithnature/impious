@@ -38,10 +38,12 @@ jobs:
         run: |
           SHORT=$(echo $GITHUB_SHA | cut -c1-7)
           IMAGE=ghcr.io/${{ github.repository_owner }}/lore-site
-          if [ "${GITHUB_REF##*/}" = "main" ]; then
+          BRANCH="${GITHUB_REF##*/}"
+          if [ "$BRANCH" = "main" ]; then
             docker buildx build --push -t $IMAGE:latest -t $IMAGE:sha-$SHORT lore-site
           else
-            docker buildx build --push -t $IMAGE:${GITHUB_REF##*/} -t $IMAGE:sha-$SHORT lore-site
+            docker buildx build --push -t $IMAGE:$BRANCH -t $IMAGE:sha-$SHORT lore-site
+          fi
 
   build_game:
     needs: preflight
@@ -58,10 +60,12 @@ jobs:
         run: |
           SHORT=$(echo $GITHUB_SHA | cut -c1-7)
           IMAGE=ghcr.io/${{ github.repository_owner }}/werewolf-game
-          if [ "${GITHUB_REF##*/}" = "main" ]; then
+          BRANCH="${GITHUB_REF##*/}"
+          if [ "$BRANCH" = "main" ]; then
             docker buildx build --push -t $IMAGE:latest -t $IMAGE:sha-$SHORT game-api
           else
-            docker buildx build --push -t $IMAGE:${GITHUB_REF##*/} -t $IMAGE:sha-$SHORT game-api
+            docker buildx build --push -t $IMAGE:$BRANCH -t $IMAGE:sha-$SHORT game-api
+          fi
 
   build_wiki:
     needs: preflight
@@ -78,10 +82,12 @@ jobs:
         run: |
           SHORT=$(echo $GITHUB_SHA | cut -c1-7)
           IMAGE=ghcr.io/${{ github.repository_owner }}/impious-wiki
-          if [ "${GITHUB_REF##*/}" = "main" ]; then
+          BRANCH="${GITHUB_REF##*/}"
+          if [ "$BRANCH" = "main" ]; then
             docker buildx build --push -t $IMAGE:latest -t $IMAGE:sha-$SHORT wiki
           else
-            docker buildx build --push -t $IMAGE:${GITHUB_REF##*/} -t $IMAGE:sha-$SHORT wiki
+            docker buildx build --push -t $IMAGE:$BRANCH -t $IMAGE:sha-$SHORT wiki
+          fi
 
   deploy:
     if: github.ref == 'refs/heads/main'
