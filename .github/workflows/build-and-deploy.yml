@@ -101,11 +101,18 @@ jobs:
       - name: Copy deploy files
         run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
 
+      - name: Login GHCR on server (safe even if packages are public)
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
+            echo '${{ secrets.GHCR_PAT }}' | docker login ghcr.io -u intunewithnature --password-stdin
+          "
+
       - name: Compose up on server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
             set -e
             cd /opt/impious/deploy
-            (docker compose pull caddy lore game status || docker-compose pull caddy lore game status) || true
+            (docker compose pull caddy lore game || docker-compose pull caddy lore game) || true
             (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
-          '
+            (docker compose ps || docker-compose ps)
+          "
