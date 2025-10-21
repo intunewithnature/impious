@@ -19,7 +19,9 @@ jobs:
           set -e
           echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
           echo "::group::ls-root"; ls -la; echo "::endgroup::"
-          echo "::group::ls-lore"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+          echo "::group::ls-lore-site"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+          echo "::group::ls-lore"; find lore -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
+          echo "::group::ls-lore-wiki"; find lore-wiki -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-game"; find game-api -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-deploy"; find deploy -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
       - name: Verify required files exist
@@ -27,6 +29,8 @@ jobs:
           set -e
           test -f lore-site/Dockerfile               || { echo "Missing lore-site/Dockerfile"; exit 1; }
           test -f lore-site/site/index.html          || { echo "Missing lore-site/site/index.html"; exit 1; }
+          test -f lore/Dockerfile                    || { echo "Missing lore/Dockerfile"; exit 1; }
+          test -f lore-wiki/tiddlywiki.info          || { echo "Missing lore-wiki/tiddlywiki.info"; exit 1; }
           test -f game-api/Dockerfile                || { echo "Missing game-api/Dockerfile"; exit 1; }
           test -f game-api/server.js                 || { echo "Missing game-api/server.js"; exit 1; }
           test -f deploy/docker-compose.yml          || { echo "Missing deploy/docker-compose.yml"; exit 1; }
@@ -38,6 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Short SHA
+        id: vars
+        run: echo "sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: Validate GHCR_PAT is present
         run: |
@@ -66,13 +74,14 @@ jobs:
           docker push $TAG:latest
           docker push $TAG:$SHA
 
-      - name: Build & push impious-wiki (latest + SHA)
-        run: |
-          TAG="ghcr.io/${{ github.repository_owner }}/impious-wiki"
-          SHA="${{ github.sha }}"
-          docker build -t "$TAG:latest" -t "$TAG:$SHA" ./wiki
-          docker push "$TAG:latest"
-          docker push "$TAG:$SHA"
+      - name: Build & push impious-lore (latest + short SHA)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./lore
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/impious-lore:${{ steps.vars.outputs.sha_short }}
+            ghcr.io/${{ github.repository_owner }}/impious-lore:latest
 
   deploy:
     needs: build
@@ -91,12 +100,11 @@ jobs:
       - name: Copy deploy files
         run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
 
-      - name: Compose up on server (build wiki locally, pull others)
+      - name: Compose up on server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
             set -e
             cd /opt/impious/deploy
             (docker compose pull caddy lore game status || docker-compose pull caddy lore game status) || true
-            (docker compose build wiki || docker-compose build wiki)
             (docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans)
           '

@@ -1,0 +1,5 @@
+title: Factions
+type: text/vnd.tiddlywiki
+tags: Index
+
+<<list-links "[tag[Faction]sort[title]]">>

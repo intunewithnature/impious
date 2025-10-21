@@ -1,0 +1,5 @@
+title: Events
+type: text/vnd.tiddlywiki
+tags: Index
+
+<<list-links "[tag[Event]sort[title]]">>
