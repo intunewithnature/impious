@@ -93,6 +93,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [build_lore, build_game, build_wiki]
     runs-on: ubuntu-latest
+    - name: Checkout repo
+      uses: actions/checkout@v4
     steps:
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.9.0
