@@ -14,25 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Show workspace
         run: |
           set -e
           echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
           echo "::group::ls-root"; ls -la; echo "::endgroup::"
+          echo "::group::ls-game"; find game-api -maxdepth 3 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-lore-site"; find lore-site -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-lore"; find lore -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
-          echo "::group::ls-lore-wiki"; find lore-wiki -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
-          echo "::group::ls-game"; find game-api -maxdepth 3 -type f -print 2>/dev/null || true; echo "::endgroup::"
           echo "::group::ls-deploy"; find deploy -maxdepth 2 -type f -print 2>/dev/null || true; echo "::endgroup::"
-
       - name: Verify required files exist
         run: |
           set -e
-          test -f lore-site/Dockerfile               || { echo "Missing lore-site/Dockerfile"; exit 1; }
-          test -f lore-site/site/index.html          || { echo "Missing lore-site/site/index.html"; exit 1; }
-          test -f lore/Dockerfile                    || { echo "Missing lore/Dockerfile"; exit 1; }
-          test -f lore-wiki/tiddlywiki.info          || { echo "Missing lore-wiki/tiddlywiki.info"; exit 1; }
           test -f game-api/Dockerfile                || { echo "Missing game-api/Dockerfile"; exit 1; }
           test -f game-api/src/index.ts              || { echo "Missing game-api/src/index.ts"; exit 1; }
           test -f game-api/public/test.html          || { echo "Missing game-api/public/test.html"; exit 1; }
@@ -61,7 +54,7 @@ jobs:
           username: intunewithnature
           password: ${{ secrets.GHCR_PAT }}
 
-      # Build & push lore-site using classic docker CLI (kept as-is)
+      # lore-site via classic CLI (kept)
       - name: Build & push lore-site (latest + SHA)
         run: |
           set -e
@@ -71,20 +64,24 @@ jobs:
           docker push $TAG:latest
           docker push $TAG:$SHA
 
-      # FIXED: Build & push werewolf-game with context=./game-api and file=./game-api/Dockerfile
+      # WEREWOLF — build from ROOT with explicit Dockerfile
       - name: Build & push werewolf-game (latest + SHA)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./game-api/Dockerfile
-          push: true
-          tags: |
-                ghcr.io/${{ github.repository_owner }}/werewolf-game:${{ github.sha }}
-                ghcr.io/${{ github.repository_owner }}/werewolf-game:${{ steps.vars.outputs.sha_short }}
-                ghcr.io/${{ github.repository_owner }}/werewolf-game:latest
-  
+        run: |
+          set -e
+          TAG=ghcr.io/${{ github.repository_owner }}/werewolf-game
+          SHA=${{ github.sha }}
+          echo "==> Building werewolf-game from repo root using Dockerfile: game-api/Dockerfile"
+          echo "PWD: $(pwd)"; ls -la; echo "----"; ls -la game-api || true
+          docker build \
+            --file game-api/Dockerfile \
+            --tag $TAG:latest \
+            --tag $TAG:$SHA \
+            .
+          echo "==> Pushing werewolf-game"
+          docker push $TAG:latest
+          docker push $TAG:$SHA
 
-      # Build & push impious-lore via build-push-action (kept)
+      # impious-lore via build-push-action (kept)
       - name: Build & push impious-lore (latest + short SHA)
         uses: docker/build-push-action@v6
         with:
@@ -107,17 +104,12 @@ jobs:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Ensure remote dir
-        run: |
-          TAG=ghcr.io/${{ github.repository_owner }}/werewolf-game
-          SHA=${{ github.sha }}
-          docker build -t $TAG:latest -t $TAG:$SHA . -f game-api/Dockerfile
-          docker push $TAG:latest
-          docker push $TAG:$SHA
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} 'mkdir -p /opt/impious/deploy'
 
       - name: Copy deploy files
         run: scp -o StrictHostKeyChecking=no -r deploy/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/impious/deploy/
 
-      - name: Login GHCR on server (safe even if packages are public)
+      - name: Login GHCR on server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
             echo '${{ secrets.GHCR_PAT }}' | docker login ghcr.io -u intunewithnature --password-stdin
