@@ -1,0 +1,31 @@
+site_name: Impious Wiki
+site_url: https://impious.io/wiki/
+repo_url: https://github.com/intunewithnature/impious
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+    - content.tabs.link
+    - search.suggest
+    - search.highlight
+plugins:
+  - search
+  - minify
+  - git-revision-date-localized:
+      fallback_to_build_date: true
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Roles & Phases: roles.md
+  - Changelog: changelog.md

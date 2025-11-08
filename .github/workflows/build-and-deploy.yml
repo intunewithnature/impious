@@ -40,6 +40,16 @@ jobs:
           build-args: |
             COMMIT_SHA=${{ github.sha }}
 
+        - name: Build & push wiki
+          uses: docker/build-push-action@v5
+          with:
+            context: ./wiki
+            file: wiki/Dockerfile
+            push: true
+            tags: |
+              ${{ env.IMAGE_PREFIX }}/wiki:${{ env.TAG }}
+              ${{ env.IMAGE_PREFIX }}/wiki:latest
+
       - name: Build & push game-api
         uses: docker/build-push-action@v5
         with:
