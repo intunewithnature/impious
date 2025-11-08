@@ -2,9 +2,8 @@ name: build-and-deploy
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch: {}
 
-# Dynamic prefix; resolves to ghcr.io/owner/repo
 env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
 
@@ -15,7 +14,7 @@ jobs:
       contents: read
       packages: write
     outputs:
-      TAG: ${{ steps.settag.outputs.TAG }}
+      TAG: ${{ steps.tag.outputs.TAG }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +39,7 @@ jobs:
           docker tag  $IMAGE_PREFIX/game-api:${{ github.sha }} $IMAGE_PREFIX/game-api:latest
           docker push $IMAGE_PREFIX/game-api:latest
 
-      - id: settag
+      - id: tag
         run: echo "TAG=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
   deploy:
@@ -49,7 +48,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Upload deploy files
+      # 1) Ensure the remote deploy directory exists
+      - name: Ensure deploy dir exists
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            mkdir -p "${{ secrets.DEPLOY_PATH }}"
+
+      # 2) Copy ONLY the files under deploy/ to the target dir
+      - name: Push deploy files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -60,7 +72,8 @@ jobs:
           target: "${{ secrets.DEPLOY_PATH }}"
           overwrite: true
 
-      - name: Compose up on server
+      # 3) Remote deploy with verification + GHCR login
+      - name: Remote deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -70,10 +83,26 @@ jobs:
           script: |
             set -euo pipefail
             cd "${{ secrets.DEPLOY_PATH }}"
+            echo "PWD=$(pwd)"
+            ls -la
+
+            # sanity checks
+            test -f docker-compose.yml || { echo "docker-compose.yml missing in $PWD"; exit 1; }
+            test -f Caddyfile || { echo "Caddyfile missing in $PWD"; exit 1; }
             [ -f .env ] || { echo "Missing .env in $PWD"; exit 1; }
+
+            # login to GHCR so pulls work even if packages are private
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            # export dynamic vars for compose
             export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
             export TAG="${{ needs.build.outputs.TAG }}"
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            # show compose version for clarity
+            docker compose version || { echo "Docker compose not installed on server"; exit 1; }
+
+            # bring it up
             docker compose pull || true
             docker compose up -d --remove-orphans
+            docker compose ps
             docker system prune -f || true
