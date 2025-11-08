@@ -5,9 +5,9 @@ services:
     ports: ["80:80","443:443"]
     environment:
       - CADDY_EMAIL=${CADDY_EMAIL}
-      - LORE_DOMAIN=${LORE_DOMAIN}
-      - GAME_DOMAIN=${GAME_DOMAIN}
-      - WIKI_DOMAIN=${WIKI_DOMAIN}
+      - LORE_DOMAIN=${LORE_DOMAIN:-impious.io}
+      - GAME_DOMAIN=${GAME_DOMAIN:-game.impious.io}
+      - WIKI_DOMAIN=${WIKI_DOMAIN:-wiki.impious.io}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
