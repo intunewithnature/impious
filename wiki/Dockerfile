@@ -1,7 +1,7 @@
 # ---- build ----
 FROM python:3.12-alpine AS build
 WORKDIR /site
-RUN apk add --no-cache build-base libffi-dev
+RUN apk add --no-cache build-base libffi-dev git
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY mkdocs.yml .
