@@ -2,17 +2,17 @@
   email {$CADDY_EMAIL}
 }
 
-{$LORE_DOMAIN} {
+{$LORE_DOMAIN:impious.io} {
   encode zstd gzip
   reverse_proxy lore:80
 }
 
-{$WIKI_DOMAIN} {
+{$WIKI_DOMAIN:wiki.impious.io} {
   encode zstd gzip
   reverse_proxy wiki:80
 }
 
-{$GAME_DOMAIN} {
+{$GAME_DOMAIN:game.impious.io} {
   encode zstd gzip
   reverse_proxy game:8080 {
     header_up Connection {>Connection}
