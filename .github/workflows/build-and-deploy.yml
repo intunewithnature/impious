@@ -25,7 +25,7 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build & push lore-site (context is repo root)
+      - name: Build & push lore-site
         run: |
           docker build -f lore-site/Dockerfile -t $IMAGE_PREFIX/lore-site:${{ github.sha }} .
           docker push $IMAGE_PREFIX/lore-site:${{ github.sha }}
@@ -48,8 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Ensure the remote deploy directory exists
-      - name: Ensure deploy dir exists
+      - name: Ensure remote deploy dir exists
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -60,8 +59,7 @@ jobs:
             set -e
             mkdir -p "${{ secrets.DEPLOY_PATH }}"
 
-      # 2) Copy ONLY the files under deploy/ to the target dir
-      - name: Push deploy files
+      - name: Upload deploy files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -72,8 +70,8 @@ jobs:
           target: "${{ secrets.DEPLOY_PATH }}"
           overwrite: true
 
-      # 3) Remote deploy with verification + GHCR login
-      - name: Remote deploy
+      - name: Remote compose up
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -82,71 +80,24 @@ jobs:
           script: |
             set -euo pipefail
             cd "${{ secrets.DEPLOY_PATH }}"
-            echo "PWD=$(pwd)"
-            ls -la
-
-            # auto-flatten if deploy/ got nested
+            echo "PWD=$(pwd)"; ls -la
+            # Flatten nested deploy dir if present
             if [ -d deploy ] && [ -f deploy/docker-compose.yml ]; then
               shopt -s dotglob nullglob || true
               mv deploy/* .
               rmdir deploy || true
             fi
-
-            # sanity checks
-            test -f docker-compose.yml || { echo "docker-compose.yml missing in $PWD"; exit 1; }
-            test -f Caddyfile || { echo "Caddyfile missing in $PWD"; exit 1; }
-            [ -f .env ] || { echo "Missing .env in $PWD"; exit 1; }
-
-            # login to GHCR
+            # Sanity checks
+            test -f docker-compose.yml || { echo "docker-compose.yml missing"; exit 1; }
+            test -f Caddyfile || { echo "Caddyfile missing"; exit 1; }
+            [ -f .env ] || { echo "Missing .env"; exit 1; }
+            # GHCR login for private pulls
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-
-            # compose must exist
-            docker compose version || { echo "Docker compose not installed on server"; exit 1; }
-
-            # clean slate to avoid recreate race
+            # Clean and redeploy
             docker compose down --remove-orphans || true
             docker system prune -f || true
-
-            # pull and start
             export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
             export TAG="${{ needs.build.outputs.TAG }}"
             docker compose pull || true
             docker compose up -d --force-recreate
             docker compose ps
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            set -euo pipefail
-            cd "${{ secrets.DEPLOY_PATH }}"
-            echo "PWD=$(pwd)"
-            ls -la
-
-            # auto-flatten if deploy/ got nested
-            if [ -d deploy ] && [ -f deploy/docker-compose.yml ]; then
-              shopt -s dotglob nullglob || true
-              mv deploy/* .
-              rmdir deploy || true
-            fi
-
-            # sanity checks
-            test -f docker-compose.yml || { echo "docker-compose.yml missing in $PWD"; exit 1; }
-            test -f Caddyfile || { echo "Caddyfile missing in $PWD"; exit 1; }
-            [ -f .env ] || { echo "Missing .env in $PWD"; exit 1; }
-
-            # login to GHCR so pulls work even if packages are private
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-
-            # export dynamic vars for compose
-            export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
-            export TAG="${{ needs.build.outputs.TAG }}"
-
-            # show compose version for clarity
-            docker compose version || { echo "Docker compose not installed on server"; exit 1; }
-
-            # bring it up
-            docker compose pull || true
-            docker compose up -d --remove-orphans
-            docker compose ps
-            docker system prune -f || true
