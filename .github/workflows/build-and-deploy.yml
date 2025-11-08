@@ -73,6 +73,7 @@ jobs:
             [ -f .env ] || { echo "Missing .env in $PWD"; exit 1; }
             export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
             export TAG="${{ needs.build.outputs.TAG }}"
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
             docker compose pull || true
             docker compose up -d --remove-orphans
             docker system prune -f || true
