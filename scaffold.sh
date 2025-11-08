@@ -6,7 +6,7 @@ GH_USER="intunewithnature"
 REPO="impious"
 IMAGE_PREFIX="ghcr.io/${GH_USER}/${REPO}"
 
-mkdir -p site lore-site game-api deploy .github/workflows
+mkdir -p site lore-site game deploy .github/workflows
 
 # --- Static site (served by Caddy)
 cat > lore-site/Dockerfile <<'EOF'
@@ -36,7 +36,7 @@ cat > site/index.html <<'EOF'
 EOF
 
 # --- Super-tiny API (no deps)
-cat > game-api/Dockerfile <<'EOF'
+cat > game/Dockerfile <<'EOF'
 FROM node:20-alpine
 WORKDIR /app
 COPY server.js .
@@ -44,7 +44,7 @@ EXPOSE 8080
 CMD ["node","server.js"]
 EOF
 
-cat > game-api/server.js <<'EOF'
+cat > game/server.js <<'EOF'
 const http = require('http');
 const port = process.env.PORT || 8080;
 http.createServer((req,res)=>{
@@ -67,6 +67,9 @@ services:
     ports: ["80:80","443:443"]
     environment:
       - CADDY_EMAIL=${CADDY_EMAIL}
+      - LORE_DOMAIN=${LORE_DOMAIN}
+      - GAME_DOMAIN=${GAME_DOMAIN}
+      - WIKI_DOMAIN=${WIKI_DOMAIN}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
@@ -77,7 +80,7 @@ services:
     restart: unless-stopped
 
   game:
-    image: ${IMAGE_PREFIX}/game-api:${TAG:-latest}
+    image: ${IMAGE_PREFIX}/game:${TAG:-latest}
     restart: unless-stopped
     expose: ["8080"]
 
@@ -107,6 +110,7 @@ cat > deploy/.env.example <<'EOF'
 CADDY_EMAIL=you@example.com
 LORE_DOMAIN=impious.io
 GAME_DOMAIN=game.impious.io
+WIKI_DOMAIN=wiki.impious.io
 EOF
 
 # --- GitHub Actions: build images to GHCR and deploy via SSH
@@ -146,12 +150,12 @@ jobs:
           docker tag  $IMAGE_PREFIX/lore-site:${{ github.sha }} $IMAGE_PREFIX/lore-site:latest
           docker push $IMAGE_PREFIX/lore-site:latest
 
-      - name: Build & push game-api
+      - name: Build & push game
         run: |
-          docker build -t $IMAGE_PREFIX/game-api:${{ github.sha }} ./game-api
-          docker push $IMAGE_PREFIX/game-api:${{ github.sha }}
-          docker tag  $IMAGE_PREFIX/game-api:${{ github.sha }} $IMAGE_PREFIX/game-api:latest
-          docker push $IMAGE_PREFIX/game-api:latest
+          docker build -t $IMAGE_PREFIX/game:${{ github.sha }} ./game
+          docker push $IMAGE_PREFIX/game:${{ github.sha }}
+          docker tag  $IMAGE_PREFIX/game:${{ github.sha }} $IMAGE_PREFIX/game:latest
+          docker push $IMAGE_PREFIX/game:latest
 
       - id: settag
         run: echo "TAG=${GITHUB_SHA}" >> $GITHUB_OUTPUT
