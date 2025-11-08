@@ -7,7 +7,6 @@ services:
       - CADDY_EMAIL=${CADDY_EMAIL}
       - LORE_DOMAIN=${LORE_DOMAIN}
       - GAME_DOMAIN=${GAME_DOMAIN}
-      - CADDY_EMAIL=${CADDY_EMAIL}
     volumes:
       - caddy_data:/data
       - caddy_config:/config

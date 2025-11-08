@@ -1,13 +1,13 @@
 {
-  email {env.CADDY_EMAIL}
+  email {$CADDY_EMAIL}
 }
 
-{env.LORE_DOMAIN} {
+{$LORE_DOMAIN} {
   encode zstd gzip
   reverse_proxy lore:80
 }
 
-{env.GAME_DOMAIN} {
+{$GAME_DOMAIN} {
   encode zstd gzip
   reverse_proxy game:8080
 }
