@@ -59,6 +59,8 @@ jobs:
           tags: |
             ${{ env.IMAGE_PREFIX }}/game-api:${{ env.TAG }}
             ${{ env.IMAGE_PREFIX }}/game-api:latest
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
 
       - id: tag
         run: echo "TAG=${TAG}" >> "$GITHUB_OUTPUT"

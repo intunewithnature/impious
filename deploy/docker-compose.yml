@@ -44,6 +44,16 @@ services:
     image: ${IMAGE_PREFIX:-ghcr.io/intunewithnature/impious}/game-api:${TAG:-latest}
     restart: unless-stopped
     expose: ["8080"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
 volumes:
   caddy_data:
