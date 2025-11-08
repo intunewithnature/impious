@@ -74,8 +74,45 @@ jobs:
 
       # 3) Remote deploy with verification + GHCR login
       - name: Remote deploy
-        uses: appleboy/ssh-action@v1.0.3
         with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_PATH }}"
+            echo "PWD=$(pwd)"
+            ls -la
+
+            # auto-flatten if deploy/ got nested
+            if [ -d deploy ] && [ -f deploy/docker-compose.yml ]; then
+              shopt -s dotglob nullglob || true
+              mv deploy/* .
+              rmdir deploy || true
+            fi
+
+            # sanity checks
+            test -f docker-compose.yml || { echo "docker-compose.yml missing in $PWD"; exit 1; }
+            test -f Caddyfile || { echo "Caddyfile missing in $PWD"; exit 1; }
+            [ -f .env ] || { echo "Missing .env in $PWD"; exit 1; }
+
+            # login to GHCR
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            # compose must exist
+            docker compose version || { echo "Docker compose not installed on server"; exit 1; }
+
+            # clean slate to avoid recreate race
+            docker compose down --remove-orphans || true
+            docker system prune -f || true
+
+            # pull and start
+            export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
+            export TAG="${{ needs.build.outputs.TAG }}"
+            docker compose pull || true
+            docker compose up -d --force-recreate
+            docker compose ps
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
