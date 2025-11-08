@@ -26,7 +26,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
 
   lore:
-    image: "${IMAGE_PREFIX}/lore:${TAG}"
+    image: "${IMAGE_PREFIX:-ghcr.io/intunewithnature/impious}/lore:${TAG:-latest}"
     restart: unless-stopped
     logging:
       driver: json-file
@@ -40,7 +40,7 @@ services:
       retries: 3
 
   wiki:
-    image: "${IMAGE_PREFIX}/wiki:${TAG}"
+    image: "${IMAGE_PREFIX:-ghcr.io/intunewithnature/impious}/wiki:${TAG:-latest}"
     restart: unless-stopped
     logging:
       driver: json-file
@@ -54,7 +54,7 @@ services:
       retries: 3
 
   game:
-    image: "${IMAGE_PREFIX}/game:${TAG}"
+    image: "${IMAGE_PREFIX:-ghcr.io/intunewithnature/impious}/game:${TAG:-latest}"
     restart: unless-stopped
     environment:
       - PORT=8080
