@@ -81,19 +81,23 @@ jobs:
             set -euo pipefail
             cd "${{ secrets.DEPLOY_PATH }}"
             echo "PWD=$(pwd)"; ls -la
-            # Flatten nested deploy dir if present
+
+            # Flatten nested deploy/ if present
             if [ -d deploy ] && [ -f deploy/docker-compose.yml ]; then
               shopt -s dotglob nullglob || true
               mv deploy/* .
               rmdir deploy || true
             fi
+
             # Sanity checks
             test -f docker-compose.yml || { echo "docker-compose.yml missing"; exit 1; }
             test -f Caddyfile || { echo "Caddyfile missing"; exit 1; }
             [ -f .env ] || { echo "Missing .env"; exit 1; }
+
             # GHCR login for private pulls
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-            # Clean and redeploy
+
+            # Clean and redeploy (handles compose “recreate” flakiness)
             docker compose down --remove-orphans || true
             docker system prune -f || true
             export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
