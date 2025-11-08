@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.yarn
+.pnpm-store
+.vite
+dist
+.git
+.gitignore

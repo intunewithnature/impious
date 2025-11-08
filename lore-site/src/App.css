@@ -1,0 +1,103 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: clamp(2rem, 8vw, 6rem) clamp(1.25rem, 8vw, 6rem);
+  color: inherit;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(16, 16, 16, 0.08);
+  color: inherit;
+  text-decoration: none;
+}
+
+.hero {
+  display: grid;
+  gap: 1.5rem;
+  margin: clamp(3rem, 12vh, 8rem) 0;
+  max-width: 42rem;
+}
+
+.hero h1 {
+  font-size: clamp(2.75rem, 8vw, 5rem);
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.hero p {
+  margin: 0;
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
+  line-height: 1.6;
+  color: rgba(17, 17, 17, 0.8);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(17, 17, 17, 0.04);
+  color: inherit;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(17, 17, 17, 0.2);
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.button.primary {
+  background: #111;
+  color: #f7f7f7;
+}
+
+.button.primary:hover,
+.button.primary:focus-visible {
+  border-color: #111;
+  background: #000;
+}
+
+.footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: rgba(17, 17, 17, 0.65);
+}
+
+.footer a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.footer a:hover,
+.footer a:focus-visible {
+  text-decoration: underline;
+}

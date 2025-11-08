@@ -13,8 +13,18 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
 
   lore:
-    image: ${IMAGE_PREFIX:-ghcr.io/intunewithnature/impious}/lore-site:${TAG:-latest}
+    image: "${IMAGE_PREFIX}/lore:${TAG}"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz.txt"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
   game:
     image: ${IMAGE_PREFIX:-ghcr.io/intunewithnature/impious}/game-api:${TAG:-latest}

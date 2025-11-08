@@ -6,6 +6,7 @@ on:
 
 env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+  TAG: ${{ github.sha }}
 
 jobs:
   build:
@@ -25,22 +26,32 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build & push lore-site
-        run: |
-          docker build -f lore-site/Dockerfile -t $IMAGE_PREFIX/lore-site:${{ github.sha }} .
-          docker push $IMAGE_PREFIX/lore-site:${{ github.sha }}
-          docker tag  $IMAGE_PREFIX/lore-site:${{ github.sha }} $IMAGE_PREFIX/lore-site:latest
-          docker push $IMAGE_PREFIX/lore-site:latest
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build & push lore
+        uses: docker/build-push-action@v5
+        with:
+          context: ./lore-site
+          file: lore-site/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/lore:${{ env.TAG }}
+            ${{ env.IMAGE_PREFIX }}/lore:latest
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
 
       - name: Build & push game-api
-        run: |
-          docker build -t $IMAGE_PREFIX/game-api:${{ github.sha }} ./game-api
-          docker push $IMAGE_PREFIX/game-api:${{ github.sha }}
-          docker tag  $IMAGE_PREFIX/game-api:${{ github.sha }} $IMAGE_PREFIX/game-api:latest
-          docker push $IMAGE_PREFIX/game-api:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./game-api
+          file: game-api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/game-api:${{ env.TAG }}
+            ${{ env.IMAGE_PREFIX }}/game-api:latest
 
       - id: tag
-        run: echo "TAG=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+        run: echo "TAG=${TAG}" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: build
