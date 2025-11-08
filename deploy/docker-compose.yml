@@ -3,6 +3,18 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     ports: ["80:80","443:443"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      lore:
+        condition: service_healthy
+      wiki:
+        condition: service_healthy
+      game:
+        condition: service_healthy
     environment:
       - CADDY_EMAIL=${CADDY_EMAIL}
       - LORE_DOMAIN=${LORE_DOMAIN:-impious.io}
@@ -53,7 +65,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
       interval: 30s
       timeout: 3s
       retries: 3
