@@ -1,8 +1,4 @@
 node_modules
-npm-debug.log
-.yarn
-.pnpm-store
-.vite
 dist
+.vite
 .git
-.gitignore
