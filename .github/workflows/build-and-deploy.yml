@@ -2,7 +2,12 @@ name: build-and-deploy
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      deploy_tag:
+        description: "Existing image tag to deploy instead of the current commit SHA"
+        required: false
+        default: ""
 
 env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
@@ -73,6 +78,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Resolve deployment tag
+        id: resolved_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.deploy_tag }}" ]; then
+            echo "TAG=${{ github.event.inputs.deploy_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "TAG=${{ needs.build.outputs.TAG }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Ensure remote deploy dir exists
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -126,7 +140,7 @@ jobs:
             docker compose down --remove-orphans || true
             docker system prune -f || true
             export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
-            export TAG="${{ needs.build.outputs.TAG }}"
+            export TAG="${{ steps.resolved_tag.outputs.TAG }}"
             docker compose pull || true
             docker compose up -d --force-recreate
             docker compose ps
