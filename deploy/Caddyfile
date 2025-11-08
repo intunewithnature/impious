@@ -4,18 +4,18 @@
 
 {$LORE_DOMAIN} {
   encode zstd gzip
-  handle_path /wiki* {
-    reverse_proxy wiki:80
-  }
   reverse_proxy lore:80
+}
+
+{$WIKI_DOMAIN} {
+  encode zstd gzip
+  reverse_proxy wiki:80
 }
 
 {$GAME_DOMAIN} {
   encode zstd gzip
-  reverse_proxy game:8080
+  reverse_proxy game:8080 {
+    header_up Connection {>Connection}
+    header_up Upgrade {>Upgrade}
+  }
 }
-
-# Optional: dedicated subdomain (requires DNS A/AAAA)
-# {$WIKI_DOMAIN} {
-#   reverse_proxy wiki:80
-# }

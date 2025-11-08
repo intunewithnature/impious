@@ -1,5 +1,6 @@
 site_name: Impious Wiki
-site_url: https://impious.io/wiki/
+site_url: https://wiki.impious.io/
+use_directory_urls: true
 repo_url: https://github.com/intunewithnature/impious
 theme:
   name: material

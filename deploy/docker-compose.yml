@@ -7,6 +7,7 @@ services:
       - CADDY_EMAIL=${CADDY_EMAIL}
       - LORE_DOMAIN=${LORE_DOMAIN}
       - GAME_DOMAIN=${GAME_DOMAIN}
+      - WIKI_DOMAIN=${WIKI_DOMAIN}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
@@ -41,8 +42,10 @@ services:
       retries: 3
 
   game:
-    image: ${IMAGE_PREFIX:-ghcr.io/intunewithnature/impious}/game-api:${TAG:-latest}
+    image: "${IMAGE_PREFIX}/game:${TAG}"
     restart: unless-stopped
+    environment:
+      - PORT=8080
     expose: ["8080"]
     logging:
       driver: json-file

@@ -5,7 +5,7 @@ export default function App() {
       <p>Social deduction for people who actually like finishing games.</p>
       <div className="row">
         <a className="btn" href="https://game.impious.io" rel="noopener">Play (alpha)</a>
-        <a className="btn ghost" href="/wiki" rel="noopener">Wiki</a>
+        <a className="btn ghost" href="https://wiki.impious.io" rel="noopener">Wiki</a>
         <a className="btn ghost" href="https://game.impious.io/health" rel="noopener">Game health</a>
         <a className="btn ghost" href="/changelog.html" rel="noopener">Changelog</a>
       </div>
