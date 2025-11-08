@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import { randomUUID } from "node:crypto";
 import { Incoming as IncomingSchema } from "./protocol.js";
@@ -25,6 +26,29 @@ const app = Fastify({
   requestIdLogLabel: "requestId",
 });
 
+const allowedOrigins = new Set([
+  "https://impious.io",
+  "https://wiki.impious.io",
+  "https://game.impious.io",
+]);
+
+await app.register(cors, {
+  origin(origin, cb) {
+    if (!origin) {
+      cb(null, true);
+      return;
+    }
+
+    if (allowedOrigins.has(origin) || /^https:\/\/[a-z0-9-]+\.impious\.io$/.test(origin)) {
+      cb(null, true);
+      return;
+    }
+
+    cb(null, false);
+  },
+  credentials: true,
+});
+
 await app.register(websocket);
 
 app.addHook("onRequest", async (request) => {
@@ -32,6 +56,12 @@ app.addHook("onRequest", async (request) => {
 });
 
 app.get("/health", async () => ({
+  ok: true,
+  version: COMMIT_SHA,
+  time: new Date().toISOString(),
+}));
+
+app.get("/healthz", async () => ({
   ok: true,
   version: COMMIT_SHA,
   time: new Date().toISOString(),

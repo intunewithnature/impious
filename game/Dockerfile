@@ -20,5 +20,5 @@ ENV PORT=8080
 ENV COMMIT_SHA=${COMMIT_SHA}
 USER node
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0.1:${PORT}/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0.1:${PORT}/healthz || exit 1
 CMD ["node", "dist/server.js"]
