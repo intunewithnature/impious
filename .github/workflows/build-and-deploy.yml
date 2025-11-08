@@ -1,0 +1,78 @@
+name: build-and-deploy
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Dynamic prefix; resolves to ghcr.io/owner/repo
+env:
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      TAG: ${{ steps.settag.outputs.TAG }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build & push lore-site (context is repo root)
+        run: |
+          docker build -f lore-site/Dockerfile -t $IMAGE_PREFIX/lore-site:${{ github.sha }} .
+          docker push $IMAGE_PREFIX/lore-site:${{ github.sha }}
+          docker tag  $IMAGE_PREFIX/lore-site:${{ github.sha }} $IMAGE_PREFIX/lore-site:latest
+          docker push $IMAGE_PREFIX/lore-site:latest
+
+      - name: Build & push game-api
+        run: |
+          docker build -t $IMAGE_PREFIX/game-api:${{ github.sha }} ./game-api
+          docker push $IMAGE_PREFIX/game-api:${{ github.sha }}
+          docker tag  $IMAGE_PREFIX/game-api:${{ github.sha }} $IMAGE_PREFIX/game-api:latest
+          docker push $IMAGE_PREFIX/game-api:latest
+
+      - id: settag
+        run: echo "TAG=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload deploy files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "deploy/*"
+          target: "${{ secrets.DEPLOY_PATH }}"
+          overwrite: true
+
+      - name: Compose up on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_PATH }}"
+            [ -f .env ] || { echo "Missing .env in $PWD"; exit 1; }
+            export IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
+            export TAG="${{ needs.build.outputs.TAG }}"
+            docker compose pull || true
+            docker compose up -d --remove-orphans
+            docker system prune -f || true

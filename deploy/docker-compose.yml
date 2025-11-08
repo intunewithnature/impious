@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80","443:443"]
+    environment:
+      - CADDY_EMAIL=${CADDY_EMAIL}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+  lore:
+    image: ${IMAGE_PREFIX}/lore-site:${TAG:-latest}
+    restart: unless-stopped
+
+  game:
+    image: ${IMAGE_PREFIX}/game-api:${TAG:-latest}
+    restart: unless-stopped
+    expose: ["8080"]
+
+volumes:
+  caddy_data:
+  caddy_config:
