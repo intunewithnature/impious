@@ -37,6 +37,12 @@ app.get("/health", async () => ({
   time: new Date().toISOString(),
 }));
 
+app.get("/healthz", async () => ({
+  ok: true,
+  version: COMMIT_SHA,
+  time: new Date().toISOString(),
+}));
+
 app.get("/version", async () => ({
   version: COMMIT_SHA,
 }));
