@@ -86,6 +86,13 @@ jobs:
             echo "PWD=$(pwd)"
             ls -la
 
+            # auto-flatten if deploy/ got nested
+            if [ -d deploy ] && [ -f deploy/docker-compose.yml ]; then
+              shopt -s dotglob nullglob || true
+              mv deploy/* .
+              rmdir deploy || true
+            fi
+
             # sanity checks
             test -f docker-compose.yml || { echo "docker-compose.yml missing in $PWD"; exit 1; }
             test -f Caddyfile || { echo "Caddyfile missing in $PWD"; exit 1; }
