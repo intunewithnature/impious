@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Caddyfile with your site definition
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Static site from the repo (relative to deploy/)
+      - ../site/public:/srv/site:ro
+      # Persist certs & config so Let's Encrypt survives restarts
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
