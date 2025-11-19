@@ -1,4 +1,8 @@
-impious.io {
+imperiumsolis.org {
     root * /srv/site
     file_server
+}
+
+www.imperiumsolis.org {
+        redir https://imperiumsolis.org{uri}
 }
