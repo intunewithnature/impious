@@ -1,15 +1,16 @@
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: caddy
+    container_name: caddy-dev
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - ../site/public:/srv/site:ro
       - caddy_data:/data
       - caddy_config:/config
-    restart: unless-stopped
 
 volumes:
   caddy_data:
