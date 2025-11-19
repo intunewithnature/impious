@@ -1,0 +1,10 @@
+FROM caddy:2-alpine
+
+LABEL org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY:-impious/impious}"
+LABEL org.opencontainers.image.description="Caddy image serving impious.io static lore site"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Copy production Caddyfile and static assets into the image so it can run
+# without bind mounts (useful for GHCR publishing or future deploy targets).
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY site/public /srv/site

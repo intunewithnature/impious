@@ -1,24 +1,31 @@
+# Production docker-compose stack for Impious.
+# EXPECTED HOST LAYOUT:
+#   - Repo lives at /opt/impious/deploy
+#   - Run docker compose from this directory (deploy/)
+#   - Relative mounts below resolve to /opt/impious/deploy/*
+
 services:
   caddy:
-    # keep your existing image if different, but this is sane default
     image: caddy:2-alpine
-    # if you already set container_name, keep that instead of this
     container_name: caddy-prod
     restart: unless-stopped
 
     ports:
       - "80:80"
       - "443:443"
-      - "443:443/udp"   # for HTTP/3; optional but nice
+      - "443:443/udp"   # HTTP/3
 
     volumes:
-      # prod Caddyfile for impious.io only
+      # ./Caddyfile => /opt/impious/deploy/deploy/Caddyfile
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      # static site content
+      # ../site/public => /opt/impious/deploy/site/public
       - ../site/public:/srv/site:ro
-      # Caddy state
+      # persisted Caddy state
       - caddy_data:/data
       - caddy_config:/config
+
+    networks:
+      - impious-net
 
     healthcheck:
       test: ["CMD", "caddy", "version"]
@@ -33,6 +40,34 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Future browser-game / API service.
+  # When ready, drop the comments and adjust build context/image as needed.
+  #
+  # game-api:
+  #   build:
+  #     context: ../game-api
+  #     dockerfile: Dockerfile
+  #   # Alternatively use image: ghcr.io/impious/game-api:latest
+  #   restart: unless-stopped
+  #
+  #   # Do not publish ports in production; expose internally only.
+  #   expose:
+  #     - "3000"
+  #
+  #   environment:
+  #     # example: DATABASE_URL=postgres://...
+  #     # - NODE_ENV=production
+  #
+  #   networks:
+  #     - impious-net
+  #
+  #   depends_on:
+  #     - caddy
+
 volumes:
   caddy_data:
   caddy_config:
+
+networks:
+  impious-net:
+    name: impious-net

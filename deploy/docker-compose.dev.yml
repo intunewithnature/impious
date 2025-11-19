@@ -1,22 +1,33 @@
+# Developer docker-compose overrides for Impious.
+# Run from deploy/ in your local clone (paths stay relative to repo root).
+
 services:
   caddy:
     image: caddy:2-alpine
     container_name: caddy-dev
     restart: unless-stopped
+
+    # Use high ports to avoid sudo on macOS/Linux.
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "8080:80"
+      - "8443:443"
+      - "8443:443/udp"
+
     volumes:
       - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - ../site/public:/srv/site:ro
       - caddy_dev_data:/data
       - caddy_dev_config:/config
+
+    networks:
+      - impious-dev-net
+
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+
     healthcheck:
       test: ["CMD", "caddy", "version"]
       interval: 30s
@@ -24,6 +35,35 @@ services:
       retries: 3
       start_period: 10s
 
+  # Future dev-only game/API container:
+  #
+  # game-api:
+  #   build:
+  #     context: ../game-api
+  #     dockerfile: Dockerfile
+  #   container_name: game-api-dev
+  #   restart: unless-stopped
+  #
+  #   # Bind-mount source for hot reload.
+  #   volumes:
+  #     - ../game-api:/app
+  #
+  #   environment:
+  #     - NODE_ENV=development
+  #
+  #   ports:
+  #     - "3000:3000"
+  #
+  #   networks:
+  #     - impious-dev-net
+  #
+  #   depends_on:
+  #     - caddy
+
 volumes:
   caddy_dev_data:
   caddy_dev_config:
+
+networks:
+  impious-dev-net:
+    name: impious-dev-net

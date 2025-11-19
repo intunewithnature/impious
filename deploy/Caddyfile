@@ -1,15 +1,23 @@
-# Caddyfile for prod: impious-vps
-# Domain: impious.io only
+# Production Caddyfile for Impious (runs inside docker-compose caddy service).
+# Static lore/marketing site lives at /srv/site (bind-mounted from ../site/public).
+# Caddy handles TLS automatically; do not hard-code certificates here.
 
 impious.io {
     root * /srv/site
 
-    encode gzip zstd
+    encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
 }
 
 www.impious.io {
-    # canonical redirect to bare domain
+    # Canonical redirect to bare domain.
     redir https://impious.io{uri}
 }
+
+# Future game/API endpoint. Keep this commented until the game service exists on
+# the docker network (service name: game-api, port: 3000).
+#
+# game.impious.io {
+#     reverse_proxy game-api:3000
+# }
