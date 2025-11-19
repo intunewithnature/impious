@@ -1,24 +1,31 @@
+# Production docker-compose stack for Impious.
+# EXPECTED HOST LAYOUT:
+#   - Repo lives at /opt/impious/deploy
+#   - Run docker compose from this directory (deploy/)
+#   - Relative mounts below resolve to /opt/impious/deploy/*
+
 services:
   caddy:
-    # keep your existing image if different, but this is sane default
     image: caddy:2-alpine
-    # if you already set container_name, keep that instead of this
     container_name: caddy-prod
     restart: unless-stopped
 
     ports:
       - "80:80"
       - "443:443"
-      - "443:443/udp"   # for HTTP/3; optional but nice
+      - "443:443/udp"   # HTTP/3
 
     volumes:
-      # prod Caddyfile for impious.io only
+      # ./Caddyfile => /opt/impious/deploy/deploy/Caddyfile
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      # static site content
+      # ../site/public => /opt/impious/deploy/site/public
       - ../site/public:/srv/site:ro
-      # Caddy state
+      # persisted Caddy state
       - caddy_data:/data
       - caddy_config:/config
+
+    networks:
+      - impious-net
 
     healthcheck:
       test: ["CMD", "caddy", "version"]
@@ -36,3 +43,7 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+
+networks:
+  impious-net:
+    name: impious-net
