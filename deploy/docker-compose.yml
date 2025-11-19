@@ -40,6 +40,30 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Future browser-game / API service.
+  # When ready, drop the comments and adjust build context/image as needed.
+  #
+  # game-api:
+  #   build:
+  #     context: ../game-api
+  #     dockerfile: Dockerfile
+  #   # Alternatively use image: ghcr.io/impious/game-api:latest
+  #   restart: unless-stopped
+  #
+  #   # Do not publish ports in production; expose internally only.
+  #   expose:
+  #     - "3000"
+  #
+  #   environment:
+  #     # example: DATABASE_URL=postgres://...
+  #     # - NODE_ENV=production
+  #
+  #   networks:
+  #     - impious-net
+  #
+  #   depends_on:
+  #     - caddy
+
 volumes:
   caddy_data:
   caddy_config:

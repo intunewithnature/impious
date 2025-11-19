@@ -35,6 +35,31 @@ services:
       retries: 3
       start_period: 10s
 
+  # Future dev-only game/API container:
+  #
+  # game-api:
+  #   build:
+  #     context: ../game-api
+  #     dockerfile: Dockerfile
+  #   container_name: game-api-dev
+  #   restart: unless-stopped
+  #
+  #   # Bind-mount source for hot reload.
+  #   volumes:
+  #     - ../game-api:/app
+  #
+  #   environment:
+  #     - NODE_ENV=development
+  #
+  #   ports:
+  #     - "3000:3000"
+  #
+  #   networks:
+  #     - impious-dev-net
+  #
+  #   depends_on:
+  #     - caddy
+
 volumes:
   caddy_dev_data:
   caddy_dev_config:
