@@ -1,0 +1,4 @@
+imperiumsolis.org {
+    root * /srv/site
+    file_server
+}
