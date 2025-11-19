@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   caddy:
     # keep your existing image if different, but this is sane default
