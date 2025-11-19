@@ -1,16 +1,39 @@
+version: "3.9"
+
 services:
   caddy:
+    # keep your existing image if different, but this is sane default
     image: caddy:2-alpine
-    container_name: caddy-dev
+    # if you already set container_name, keep that instead of this
+    container_name: caddy-prod
     restart: unless-stopped
+
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"   # for HTTP/3; optional but nice
+
     volumes:
-      - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      # prod Caddyfile for impious.io only
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # static site content
       - ../site/public:/srv/site:ro
+      # Caddy state
       - caddy_data:/data
       - caddy_config:/config
+
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   caddy_data:
