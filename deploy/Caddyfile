@@ -1,8 +1,15 @@
-imperiumsolis.org {
+# Caddyfile for prod: impious-vps
+# Domain: impious.io only
+
+impious.io {
     root * /srv/site
+
+    encode gzip zstd
+    try_files {path} {path}/ /index.html
     file_server
 }
 
-www.imperiumsolis.org {
-        redir https://imperiumsolis.org{uri}
+www.impious.io {
+    # canonical redirect to bare domain
+    redir https://impious.io{uri}
 }
