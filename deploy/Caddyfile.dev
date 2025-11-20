@@ -1,10 +1,12 @@
 {
+    # Local/staging defaults – never talk to ACME
     auto_https off
     http_port 80
     https_port 443
 }
 
-impious.test, www.impious.test {
+# Dev/Staging · impious.test landing copy (served from bind-mounted site/public)
+impious.test {
     tls internal
     root * /srv/site
     encode zstd gzip
@@ -12,9 +14,27 @@ impious.test, www.impious.test {
     file_server
 }
 
-game.impious.test {
+# Dev/Staging · redirect www.impious.test -> apex
+www.impious.test {
     tls internal
-    reverse_proxy game-api:3000
+    redir https://impious.test{uri}
 }
 
-# Add codex service here, route codex.impious.test { root * /srv/codex }
+# Dev/Staging · codex placeholder domain mirrors prod routing
+codex.impious.test {
+    tls internal
+    root * /srv/codex
+    encode zstd gzip
+    try_files {path} {path}/ /index.html
+    file_server
+}
+
+# Dev/Staging · future multiplayer API stub (see docker-compose.dev.yml --profile game)
+game.impious.test {
+    tls internal
+    reverse_proxy game-api:3000 {
+        header_up Host {http.request.host}
+        header_up X-Forwarded-Proto {http.request.scheme}
+        header_up X-Real-IP {http.request.remote}
+    }
+}

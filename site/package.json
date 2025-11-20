@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:staging": "vite build --mode staging",
     "preview": "vite preview",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "verify:bundle": "npm run build -- --mode production && git diff --exit-code public"
   },
   "dependencies": {
     "three": "^0.161.0"

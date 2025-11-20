@@ -1,35 +1,40 @@
 services:
   caddy:
-    image: ghcr.io/intunewithnature/impious-site:${IMAGE_TAG:-dev}
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile.caddy
-      args:
-        VITE_MODE: production
+    image: caddy:2.8.4-alpine
+    container_name: impious-caddy
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      CADDY_ADMIN_EMAIL: ${CADDY_ADMIN_EMAIL:?Set CADDY_ADMIN_EMAIL in deploy/.env}
     ports:
       - "80:80"
       - "443:443"
       - "443:443/udp"
     volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${SITE_BUNDLE_PATH:-../site/public}:/srv/site:ro
+      - ${CODEX_PAYLOAD_HOST_PATH:-../codex-payload}:/srv/codex:ro
       - caddy_data:/data
       - caddy_config:/config
-      - codex_payload:/srv/codex:ro # swap for /opt/impious/codex:/srv/codex to bind real lore drops
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2019/config/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - edge
 
   game-api:
     profiles: ['game']
-    image: ghcr.io/intunewithnature/game-api:${GAME_IMAGE_TAG:-dev}
+    image: ${GAME_API_IMAGE:-ghcr.io/intunewithnature/game-api:main}
     restart: unless-stopped
     expose:
       - "3000"
     networks:
       - edge
-    # env_file:
-    #   - ../game-api/.env
-    # build:
-    #   context: ../game-api
+    # TODO: swap to the real game service (or remove this service) once the backend ships.
 
 networks:
   edge:
@@ -38,4 +43,3 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
-  codex_payload:
