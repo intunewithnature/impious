@@ -1,8 +1,20 @@
-imperiumsolis.org {
+{
+    auto_https off
+    http_port 80
+    https_port 443
+}
+
+impious.test, www.impious.test {
+    tls internal
     root * /srv/site
     encode zstd gzip
-
     try_files {path} {path}/ /index.html
-
     file_server
 }
+
+game.impious.test {
+    tls internal
+    reverse_proxy game-api:3000
+}
+
+# Add codex service here, route codex.impious.test { root * /srv/codex }

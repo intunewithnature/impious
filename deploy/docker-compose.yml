@@ -1,18 +1,41 @@
 services:
   caddy:
-    image: caddy:2-alpine
-    container_name: caddy-dev
+    image: ghcr.io/intunewithnature/impious-site:${IMAGE_TAG:-dev}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.caddy
+      args:
+        VITE_MODE: production
     restart: unless-stopped
-    working_dir: /srv/site
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"
     volumes:
-      - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
-      - ../site/public:/srv/site:ro
-      - caddy_data_dev:/data
-      - caddy_config_dev:/config
+      - caddy_data:/data
+      - caddy_config:/config
+      - codex_payload:/srv/codex:ro # swap for /opt/impious/codex:/srv/codex to bind real lore drops
+    networks:
+      - edge
+
+  game-api:
+    profiles: ['game']
+    image: ghcr.io/intunewithnature/game-api:${GAME_IMAGE_TAG:-dev}
+    restart: unless-stopped
+    expose:
+      - "3000"
+    networks:
+      - edge
+    # env_file:
+    #   - ../game-api/.env
+    # build:
+    #   context: ../game-api
+
+networks:
+  edge:
+    driver: bridge
 
 volumes:
-  caddy_data_dev:
-  caddy_config_dev:
+  caddy_data:
+  caddy_config:
+  codex_payload:

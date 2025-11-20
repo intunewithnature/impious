@@ -1,66 +1,61 @@
 ## Impious stack
 
-This repository contains the application stack for the Impious project. It currently serves the static lore site on `impious.io` and prepares the ground for a future browser-based Werewolf-style game hosted at `game.impious.io`.
+Impious runs as a static-first lore site (`impious.io`) with headroom for a multiplayer Werewolf experience on `game.impious.io`. Everything — landing code, infra manifests, and Docker build rules — lives in this repository so GitOps stays source-of-truth.
 
-### Services
+### Repository layout
 
-- **Caddy (`caddy` service in `deploy/docker-compose.yml`)**
-  - Reverse proxy + static file server
-  - Serves `impious.io` and redirects `www.impious.io`
-  - Mounts `deploy/Caddyfile` and `site/public/`
-  - Exposes ports 80/443/UDP for TLS + HTTP/3
-- **Game/API placeholder (`game-api`)**
-  - Commented scaffolding in both compose files
-  - Intended to live in `game-api/` with internal port `3000`
-  - Routed via Caddy once implemented (`game.impious.io`)
+- `site/`: Vite + TypeScript + Three.js landing page (componentized under `src/components/`, motion logic in `src/modules/`, and themeable styles in `src/styles/`). Build artifacts land in `site/public/` but are ignored by git.
+- `deploy/`: Docker + Caddy stack with production compose file, dev override, and the multi-stage `Dockerfile.caddy`.
 
-### Frontend landing page
+### Landing page workflow (`site/`)
 
-- Source lives under `site/src/` and is built with **Vite + TypeScript + Three.js** to hit the neon Roman aesthetic.
-- Run `npm install && npm run dev` from `site/` for a hot-reload preview (Vite’s dev server).
-- `npm run build` outputs production assets directly into `site/public/`, which is the directory Caddy serves. Commit the `public/` folder so production hosts can deploy without building.
-- Motion accessibility is respected via `prefers-reduced-motion`; heavier effects (parallax, hero Three.js scene) gracefully degrade.
+| Command | Purpose |
+| --- | --- |
+| `npm ci` | Install dep lock cleanly (Node 20+) |
+| `npm run dev` | Vite dev server (port 5173) with hot reload + WebGL scene |
+| `npm run build` | Generate static assets inside `site/public/` (gitignored) |
+| `npm run preview` | Preview the production bundle locally |
+| `npm run check` | TypeScript type/lint pass (no emit) |
 
-### Paths & deployment layout
+Highlights:
 
-- Production host expectation: repository lives at `/opt/impious/deploy`
-- Commands run from `/opt/impious/deploy/deploy`
-- Relative mounts resolve as:
-  - `./Caddyfile` → `/opt/impious/deploy/deploy/Caddyfile`
-  - `../site/public` → `/opt/impious/deploy/site/public`
-- Static assets remain bind-mounted for now; CI also publishes a self-contained Caddy image (`deploy/Dockerfile.caddy`) to GHCR.
+- Components render at runtime via `src/components/sections.ts`, keeping hero/lore/game content as structured data in `src/components/content.ts`.
+- Parallax, glitch, and WebGL “chrome” effects all respect `prefers-reduced-motion` via the motion module.
+- `site/public/` is generated every build. Docker images now build the bundle internally, so you only need the folder when mounting into the dev compose stack.
+
+### Docker + deployment
+
+- `deploy/docker-compose.yml` is the production truth. The `caddy` service either builds or pulls `ghcr.io/intunewithnature/impious-site:${IMAGE_TAG:-dev}` (multi-stage Node → Caddy). TLS state persists in the `caddy_data`/`caddy_config` volumes, and `/srv/codex` is pre-mounted via `codex_payload` for future lore drops.
+- `game-api` is scaffolded with `profiles: ['game']` so it only launches when you pass `--profile game`. Expect it to run on `game-api:3000` behind Caddy.
+- `deploy/docker-compose.dev.yml` overlays dev-only tweaks: ports `8080/8443`, local `Caddyfile.dev`, and a bind mount to `../site/public` for quick iterations. It also carries the same `game-api` profile.
+
+Typical commands (run from `deploy/`):
+
+```sh
+# production refresh
+IMAGE_TAG=dev docker compose up -d --build --remove-orphans
+
+# dev stack after npm run build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
 
 ### Domains & routing
 
 | Domain | Behavior |
 | --- | --- |
-| `impious.io` | Static lore/marketing site served by Caddy |
+| `impious.io` | Serves the static SPA bundle from `/srv/site` |
 | `www.impious.io` | Redirects to `https://impious.io` |
-| `game.impious.io` | Reserved for future game/API; reverse proxy stub documented in Caddyfile |
+| `game.impious.io` | Reverse proxies `game-api:3000` (profile gated until real service ships) |
+| `impious.test` | Dev/staging mirror with `tls internal` certificates |
 
-Local dev uses `impious.test` / `game.impious.test` with `tls internal` certificates (see `deploy/Caddyfile.dev` and `/etc/hosts` instructions in `README-dev.md`).
+Both Caddyfiles carry a codex hook comment: `# Add codex service here, route codex.imperiumsolis.com { root * /srv/codex }`. Mount `/srv/codex` (via `codex_payload` or a bind) before enabling that vhost.
 
-### Environments
+### Frontend + infra invariants
 
-- **Production**: `deploy/docker-compose.yml` (run `docker compose pull && docker compose up -d --remove-orphans` from `deploy/`).
-- **Development**: Compose override `deploy/docker-compose.dev.yml` maps host ports to `8080/8443`, uses `Caddyfile.dev`, and includes commented instructions for a hot-reloadable `game-api`. Follow `README-dev.md` for the detailed workflow.
+- All ingress terminates inside the Caddy container. No service should publish host ports directly.
+- Runtime config lives in git. Servers run `git pull` + `docker compose up -d --remove-orphans` — no snowflakes.
+- Repo lives at `/opt/impious/deploy`; compose commands run inside `/opt/impious/deploy/deploy`.
+- `site/public/` must be up to date before bringing up the dev stack, but production builds no longer depend on a pre-built folder thanks to the multi-stage Dockerfile.
+- The `dev` branch can ship experiments, but `main` remains the production build line.
 
-### CI/CD
-
-- `dev` branch: `.github/workflows/dev-ci.yml` validates compose configs, both Caddyfiles, and ensures the Caddy/site image builds.
-- `main` branch & tags: `.github/workflows/main-build.yml` builds and pushes `ghcr.io/<owner>/impious-caddy` plus (conditionally) `impious-game-api` when a `game-api/Dockerfile` exists.
-- Deployment to servers is currently manual (SSH + `docker compose`). Once secrets are provisioned, the workflows can be extended to trigger remote updates.
-
-### Invariants
-
-- All HTTP/S traffic terminates inside the Caddy container; no service bypasses it.
-- Runtime configuration (compose, Caddyfile) lives in git; no “special” server-only changes.
-- Repo location on servers is fixed: `/opt/impious/deploy`, with compose executed from the `deploy/` subdirectory.
-- `impious.io` must always serve the static lore site from `site/public`.
-- `game.impious.io` is reserved for the future game/API and must route through Docker networks (`game-api:3000`) via Caddy—never by exposing host ports directly.
-- `dev` branch is non-production:
-  - Uses alternate domains (`*.test`) and higher host ports.
-  - May include stub services or experimental configs.
-  - `main` is the canonical production branch for builds/pushes.
-
-Refer to `README-dev.md` for detailed local iteration steps and future `game-api` scaffolding.
+Read `README-dev.md` for the hands-on dev loop (Vite + compose) and `deploy/README.md` for ops notes specific to that directory.

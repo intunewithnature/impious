@@ -1,20 +1,40 @@
 services:
   caddy:
-    image: caddy:2-alpine
-    container_name: caddy-staging
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.caddy
+      args:
+        VITE_MODE: development
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
     restart: unless-stopped
-    working_dir: /srv/site
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
+      - "8443:443/udp"
     volumes:
-      # Dev / staging Caddy config
       - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
-      # Static site content
       - ../site/public:/srv/site:ro
-      # Separate dev volumes so we don't collide with prod cert/config
       - caddy_data_dev:/data
       - caddy_config_dev:/config
+    networks:
+      - edge
+
+  game-api:
+    profiles: ['game']
+    build:
+      context: ../game-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - edge
+    # volumes:
+    #   - ../game-api:/app:delegated
+    # command: npm run dev
+
+networks:
+  edge:
+    driver: bridge
 
 volumes:
   caddy_data_dev:

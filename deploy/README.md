@@ -9,52 +9,41 @@ cd /opt/impious/deploy/deploy
 Relative paths inside the compose files resolve against this location:
 
 - `./Caddyfile*` → `/opt/impious/deploy/deploy/Caddyfile*`
-- `../site/public` → `/opt/impious/deploy/site/public`
+- Docker builds use the repo root (`..`) as context when compiling the site.
 
 ### Stack separation
 
-- **Production (vps host)** uses `docker-compose.yml` together with `Caddyfile`. Those files reference the real domains (`impious.io`, etc.) and allow Caddy to obtain certificates automatically.
-- **Staging / dev (test-server)** uses `docker-compose.dev.yml` together with `Caddyfile.dev`. That Caddyfile disables automatic HTTPS and serves everything over HTTP so the staging stack never interferes with the production certificates.
-- Both stacks mount the same `../site/public` build output, so be sure to run `npm run build` in `site/` before updating either environment.
+- **Production (vps host)** uses `docker-compose.yml` + `Caddyfile`. The Caddy container serves bundled assets that are baked into the multi-stage image, so no bind-mount to `site/public` is required.
+- **Dev / staging** overlays `docker-compose.dev.yml` + `Caddyfile.dev`. This variant listens on `impious.test` domains with `tls internal`, maps ports `8080/8443`, and bind-mounts `../site/public` so you can iterate without rebuilding the image.
 
 ### Production stack (vps)
 
 - Compose file: `docker-compose.yml`
-- Service: `caddy-prod` proxy + static site with automatic HTTPS
-- Volumes: `caddy_data` / `caddy_config` for cert state, plus the read-only `../site/public` mount
-- Network: `impious-net`
+- Service: `caddy` (image `ghcr.io/intunewithnature/impious-site:${IMAGE_TAG:-dev}`)
+- Ports: `80`, `443`, `443/udp` (HTTP/3)
+- Volumes: `caddy_data` / `caddy_config` for TLS state + `codex_payload` mounted at `/srv/codex` (ready for lore drops or codex microsites)
+- Network: `edge`
+- Optional `game-api` service ships with `profiles: ['game']` — enable via `docker compose --profile game ...` once the service exists.
 - Typical refresh:
 
   ```sh
-  docker compose pull
-  docker compose up -d --remove-orphans
+  IMAGE_TAG=main docker compose up -d --build --remove-orphans
   ```
 
-### Staging / dev stack (test-server)
+### Staging / dev stack (test-server or local)
 
-- Compose file: `docker-compose.dev.yml`
-- Service: `caddy-staging` serving the same static assets via HTTP on ports 80/443
-- Caddy config: `Caddyfile.dev` with `auto_https off` and an optional commented block for future staging domains
-- Volumes: `caddy_data_dev` / `caddy_config_dev` keep staging state separate from production
-- NixOS `caddy-stack` on `test-server` is configured with `services.caddyStack.composeFile = "docker-compose.dev.yml"`, so running the service uses this dev compose file automatically.
-- Manual run/refresh (works locally too):
-
-  ```sh
-  docker compose -f docker-compose.dev.yml pull
-  docker compose -f docker-compose.dev.yml up -d --remove-orphans
-  ```
-
-You can confirm that you are hitting the dev stack by curling for the HTML marker:
-
-```sh
-curl -s http://localhost/ | grep DEV-STAGING-MARKER
-```
+- Compose invocation: `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`
+- Ports: `8080` (HTTP) and `8443` (HTTPS + HTTP/3)
+- TLS: `Caddyfile.dev` enables `tls internal` so browsers see a locally-trusted cert once you trust the CA.
+- Volumes: `caddy_data_dev` / `caddy_config_dev` keep staging certs distinct.
+- `../site/public` is bind-mounted, so remember to run `npm run build` inside `site/` before starting the stack.
 
 ### Quick reference
 
 | Scenario | Command |
 | --- | --- |
-| Prod refresh (vps) | `cd deploy && docker compose up -d --remove-orphans` |
-| Staging refresh (test-server) | `cd deploy && docker compose -f docker-compose.dev.yml up -d --remove-orphans` |
+| Prod refresh (vps) | `cd deploy && IMAGE_TAG=main docker compose up -d --build --remove-orphans` |
+| Dev/staging refresh | `cd deploy && docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` |
+| Enable game profile | Append `--profile game` to either command |
 
 Keep all config changes in git so the servers can `git pull` plus the appropriate compose command to receive updates.
