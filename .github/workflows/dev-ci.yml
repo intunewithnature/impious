@@ -17,6 +17,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Seed deploy env file
+        run: cp deploy/.env.example deploy/.env
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
