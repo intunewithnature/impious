@@ -1,0 +1,62 @@
+:root {
+  --space-900: #050114;
+  --space-800: #120735;
+  --space-700: #1c0f4a;
+  --pink-500: #ff3cf6;
+  --pink-300: #ff8ff7;
+  --blue-400: #4fd8ff;
+  --blue-600: #2998ff;
+  --orange-400: #ffb347;
+  --gold-400: #fddc5c;
+  --text-primary: #f8f4ff;
+  --text-muted: rgba(248, 244, 255, 0.7);
+  --surface-glass: rgba(12, 2, 29, 0.65);
+  --surface-elevated: rgba(20, 6, 50, 0.9);
+  --border-glow: rgba(255, 255, 255, 0.12);
+  --blur-lg: blur(30px);
+  --blur-sm: blur(8px);
+  --shadow-neon: 0 0 25px rgba(255, 60, 246, 0.35);
+  --shadow-blue: 0 0 22px rgba(63, 176, 255, 0.35);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 0, 153, 0.06), transparent, rgba(255, 196, 69, 0.05));
+  mix-blend-mode: screen;
+  z-index: -1;
+}
+
+.scanlines {
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 50%, transparent 50%);
+  background-size: 100% 3px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grid-horizon {
+  position: fixed;
+  inset: auto 0 0;
+  height: 50vh;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.4) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 2px, transparent 2px);
+  background-size: 100% 40px, 40px 100%;
+  background-position: center bottom;
+  opacity: 0.05;
+  transform: perspective(700px) rotateX(65deg);
+  transform-origin: bottom;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body[data-motion="reduced"] .layer,
+body[data-motion="reduced"] .glow,
+body[data-motion="reduced"] .floating {
+  animation: none !important;
+  transform: none !important;
+}
