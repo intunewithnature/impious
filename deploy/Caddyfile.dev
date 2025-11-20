@@ -1,0 +1,8 @@
+imperiumsolis.org {
+    root * /srv/site
+    encode zstd gzip
+
+    try_files {path} {path}/ /index.html
+
+    file_server
+}
