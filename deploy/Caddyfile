@@ -1,31 +1,30 @@
 {
-    # Production stack – ACME contact is injected via deploy/.env
     email {$CADDY_ADMIN_EMAIL}
 }
 
-# Production · imperiumsolis.org landing site (this repo → site/public)
-imperiumsolis.org {
+imperiumsolis.org, www.imperiumsolis.org {
     root * /srv/site
-    encode zstd gzip
-    try_files {path} {path}/ /index.html
     file_server
+
+    @health path /healthz
+    respond @health 200 {
+        body "ok"
+        close
+    }
 }
 
-# Production · canonicalize www -> apex
-www.imperiumsolis.org {
-    redir https://imperiumsolis.org{uri}
-}
-
-# Production · codex.imperiumsolis.com (static payload supplied by codex repo into /srv/codex)
 codex.imperiumsolis.com {
     root * /srv/codex
-    encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
+
+    @health path /healthz
+    respond @health 200 {
+        body "ok"
+        close
+    }
 }
 
-# Production · future multiplayer API (safe stub until the backend ships)
-# Set GAME_API_ENABLED=1 (and run docker compose --profile game …) to proxy to game-api:3000.
 game.imperiumsolis.com {
     @game_api_live expression {env.GAME_API_ENABLED} == "1"
 
@@ -48,4 +47,16 @@ game.imperiumsolis.com {
             close
         }
     }
+}
+
+http://imperiumsolis.org, http://www.imperiumsolis.org {
+    redir https://imperiumsolis.org{uri}
+}
+
+http://codex.imperiumsolis.com {
+    redir https://codex.imperiumsolis.com{uri}
+}
+
+http://game.imperiumsolis.com {
+    redir https://game.imperiumsolis.com{uri}
 }
