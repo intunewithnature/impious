@@ -24,18 +24,28 @@ codex.imperiumsolis.com {
     file_server
 }
 
-# Production · future multiplayer API (kept as placeholder until the service ships)
-# Expected upstream: docker-compose "game-api" service (profile gated) listening on port 3000.
-# TODO(intune): enable websocket / SSE headers + tighten timeouts once the real API exists.
-game.imperiumsolis.org {
-    reverse_proxy game-api:3000 {
-        header_up Host {http.request.host}
-        header_up X-Forwarded-Proto {http.request.scheme}
-        header_up X-Real-IP {http.request.remote}
+# Production · future multiplayer API (safe stub until the backend ships)
+# Set GAME_API_ENABLED=1 (and run docker compose --profile game …) to proxy to game-api:3000.
+game.imperiumsolis.com {
+    @game_api_live expression {env.GAME_API_ENABLED} == "1"
 
-        transport http {
-            compression off
-            read_buffer 0
+    handle @game_api_live {
+        reverse_proxy game-api:3000 {
+            header_up Host {http.request.host}
+            header_up X-Forwarded-Proto {http.request.scheme}
+            header_up X-Real-IP {http.request.remote}
+
+            transport http {
+                compression off
+                read_buffer 0
+            }
+        }
+    }
+
+    handle {
+        respond 200 {
+            body "{\"status\":\"unavailable\",\"message\":\"Imperium Solis multiplayer API is not deployed yet.\"}"
+            close
         }
     }
 }

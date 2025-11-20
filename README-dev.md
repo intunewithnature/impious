@@ -9,7 +9,8 @@ The `dev` branch mirrors production (`/opt/impious/deploy`) while adding a few q
 - Hostname overrides so `.test` domains resolve to loopback:
 
 ```
-127.0.0.1 impious.test www.impious.test codex.impious.test game.impious.test
+127.0.0.1 imperiumsolis.test www.imperiumsolis.test impious.test www.impious.test \
+codex.impious.test codex.imperiumsolis.test game.impious.test game.imperiumsolis.test
 ```
 
 ### Landing page loop
@@ -38,14 +39,14 @@ The `dev` branch mirrors production (`/opt/impious/deploy`) while adding a few q
    docker compose -f docker-compose.yml -f docker-compose.dev.yml up
    ```
 
-- Caddy terminates HTTPS on `https://impious.test:8443`, serves `../site/public`, and exposes `https://codex.impious.test:8443` if you drop codex assets under `../codex-payload-dev`.
+- Caddy terminates HTTPS on both `:443` and `:8443`, serves `../site/public`, and exposes the codex SPA once you drop artifacts under `../codex-payload-dev`. Use the high ports (`8080/8443`) when you don’t want to bind privileged ports on your workstation.
 - A bright banner appears on every non-production build so you can’t confuse staging/test bundles with prod.
 
 ### Game / API profile
 
 - Compose already defines `game-api` with `profiles: ['game']`.
   - Base manifest expects an image at `${GAME_API_IMAGE}`.
-  - Dev override swaps in a `hashicorp/http-echo` stub so `game.impious.test` resolves even without the real backend.
+  - Dev override swaps in a `hashicorp/http-echo` stub so `game.impious.test` / `game.imperiumsolis.test` resolve even without the real backend. It also sets `GAME_API_ENABLED=1` so Caddy forwards to that stub automatically; production keeps the JSON placeholder unless you set the variable yourself.
 - To exercise the future backend:
 
   ```sh
