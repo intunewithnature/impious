@@ -1,4 +1,4 @@
-imperiumsolis.com {
+imperiumsolis.org {
     root * /srv/site
     encode zstd gzip
 
