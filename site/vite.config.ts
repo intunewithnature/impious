@@ -1,17 +1,22 @@
 import { defineConfig, loadEnv } from 'vite';
-import { execSync } from 'node:child_process';
 
-const resolveGitSha = () => {
-  try {
-    return execSync('git rev-parse --short HEAD', { stdio: 'pipe' }).toString().trim();
-  } catch {
-    return 'local';
-  }
+const resolveBuildVersion = (env: Record<string, string>) => {
+  return (
+    env.VITE_BUILD_VERSION ||
+    process.env.VITE_BUILD_VERSION ||
+    env.BUILD_VERSION ||
+    process.env.BUILD_VERSION ||
+    env.GITHUB_SHA ||
+    process.env.GITHUB_SHA ||
+    env.npm_package_version ||
+    process.env.npm_package_version ||
+    'local'
+  );
 };
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const buildVersion = env.VITE_BUILD_VERSION || resolveGitSha();
+  const buildVersion = resolveBuildVersion(env);
   const runtimeEnv = env.VITE_ENV || (mode === 'production' ? 'production' : mode);
 
   process.env.VITE_BUILD_VERSION = buildVersion;
