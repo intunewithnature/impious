@@ -15,7 +15,7 @@ Key paths relative to this directory:
 ### Environment & bootstrap
 
 1. Copy `deploy/.env.example` to `deploy/.env`.
-2. Fill in `CADDY_ADMIN_EMAIL` with a deliverable address before running production compose. Dev/staging can keep the placeholder `admin@impious.test`.
+2. Fill in `CADDY_ADMIN_EMAIL` with a deliverable address before running production compose. Dev/staging can keep the placeholder `admin@imperiumsolis.test`.
 3. Optional overrides (paths + game API image) can stay commented unless your server layout differs.
 
 | Context | Minimum env to edit | Notes |
@@ -37,7 +37,29 @@ Run `deploy/bootstrap-server.sh` on fresh servers to:
   - `game-api` service exists behind `profiles: ['game']`; enable when the backend is real.
 - **Dev / staging** (`docker-compose.yml` + `docker-compose.dev.yml`)
   - Reuses the same bind mounts but swaps in `Caddyfile.dev`, exposes `8080/8443`, and keeps TLS data in `caddy_data_dev` / `caddy_config_dev`.
-  - Provides a `hashicorp/http-echo` stub for `game-api` so `game.impious.test` resolves without a backend.
+  - Provides a `hashicorp/http-echo` stub for `game-api` so `game.imperiumsolis.test` / `game.impious.test` resolve without a backend.
+
+### Domain map & TLS spot-checks
+
+- **Production hosts**: `imperiumsolis.org`, `www.imperiumsolis.org`, `codex.imperiumsolis.com`, `game.imperiumsolis.org`.
+- **Dev/Staging hosts**: `imperiumsolis.test`, `www.imperiumsolis.test`, `impious.test`, `www.impious.test`, `codex.impious.test`, `codex.imperiumsolis.test`, `game.imperiumsolis.test`, `game.impious.test`.
+- Legacy `impious.io` HTTP/S traffic now redirects via DNS/hosting to `imperiumsolis.org`—keep payloads under `/srv/site` and `/srv/codex` in sync so both stacks serve the same bits.
+
+#### Quick curls
+
+Run these from the deploy directory once the stack is up. They mimic the ACME/HTTPS handshake paths that used to fail:
+
+```sh
+# Prod listener exposed on 443
+curl -vk -H "Host: imperiumsolis.org" https://localhost
+curl -vk -H "Host: codex.imperiumsolis.com" https://localhost
+
+# Dev listener exposed on 8443 (see docker-compose.dev.yml)
+curl -vk -H "Host: codex.impious.test" https://localhost:8443
+curl -vk -H "Host: codex.imperiumsolis.test" https://localhost:8443
+```
+
+Expect HTTP 200s for the site roots (or SPA fallbacks) and confirmed certificates (`Issued by: Caddy Local Authority - ECC` for dev, Let’s Encrypt/ZeroSSL for prod). Use `-H "Host: ..."` to sanity-check additional site blocks on demand.
 
 ### Typical commands
 

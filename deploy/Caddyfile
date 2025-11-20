@@ -3,8 +3,8 @@
     email {$CADDY_ADMIN_EMAIL}
 }
 
-# Production · impious.io landing site (this repo → site/public)
-impious.io {
+# Production · imperiumsolis.org landing site (this repo → site/public)
+imperiumsolis.org {
     root * /srv/site
     encode zstd gzip
     try_files {path} {path}/ /index.html
@@ -12,8 +12,8 @@ impious.io {
 }
 
 # Production · canonicalize www -> apex
-www.impious.io {
-    redir https://impious.io{uri}
+www.imperiumsolis.org {
+    redir https://imperiumsolis.org{uri}
 }
 
 # Production · codex.imperiumsolis.com (static payload supplied by codex repo into /srv/codex)
@@ -27,7 +27,7 @@ codex.imperiumsolis.com {
 # Production · future multiplayer API (kept as placeholder until the service ships)
 # Expected upstream: docker-compose "game-api" service (profile gated) listening on port 3000.
 # TODO(intune): enable websocket / SSE headers + tighten timeouts once the real API exists.
-game.impious.io {
+game.imperiumsolis.org {
     reverse_proxy game-api:3000 {
         header_up Host {http.request.host}
         header_up X-Forwarded-Proto {http.request.scheme}

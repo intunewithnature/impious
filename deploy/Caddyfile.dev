@@ -5,8 +5,8 @@
     https_port 443
 }
 
-# Dev/Staging · impious.test landing copy (served from bind-mounted site/public)
-impious.test {
+# Dev/Staging · imperiumsolis.test + impious.test landing copy (served from bind-mounted site/public)
+imperiumsolis.test, impious.test {
     tls internal
     root * /srv/site
     encode zstd gzip
@@ -14,14 +14,14 @@ impious.test {
     file_server
 }
 
-# Dev/Staging · redirect www.impious.test -> apex
-www.impious.test {
+# Dev/Staging · redirect legacy + new www hosts -> imperiumsolis.test apex
+www.imperiumsolis.test, www.impious.test {
     tls internal
-    redir https://impious.test{uri}
+    redir https://imperiumsolis.test{uri}
 }
 
-# Dev/Staging · codex placeholder domain mirrors prod routing
-codex.impious.test {
+# Dev/Staging · codex placeholder domains mirror prod routing
+codex.impious.test, codex.imperiumsolis.test {
     tls internal
     root * /srv/codex
     encode zstd gzip
@@ -30,7 +30,7 @@ codex.impious.test {
 }
 
 # Dev/Staging · future multiplayer API stub (see docker-compose.dev.yml --profile game)
-game.impious.test {
+game.imperiumsolis.test, game.impious.test {
     tls internal
     reverse_proxy game-api:3000 {
         header_up Host {http.request.host}

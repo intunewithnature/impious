@@ -31,7 +31,7 @@ This baseline should stay alongside future remediation so teams understand what 
 ## Remediated state (dev branch · 2025-11-20)
 
 - **Routing**
-  - Caddyfiles now explicitly cover `impious.io`, `www.impious.io`, `codex.imperiumsolis.com`, and `game.impious.io` (proxy placeholder) plus `.test` equivalents with `tls internal`.
+  - Caddyfiles now explicitly cover `imperiumsolis.org`, `www.imperiumsolis.org`, `codex.imperiumsolis.com`, and `game.imperiumsolis.org` (proxy placeholder) plus `.test` equivalents with `tls internal`.
   - Codex assets mount from `/srv/codex` with documented bind-mounts (`deploy/.env.example` + `codex-payload*` folders).
 - **Compose**
   - Production compose uses stock `caddy:2.8-alpine`, bind-mounts committed `site/public`, and requires `CADDY_ADMIN_EMAIL`. Dev override mirrors ports, mounts, and ships a `hashicorp/http-echo` stub for `--profile game`.
