@@ -24,4 +24,4 @@ jobs:
             -v "${{ github.workspace }}/deploy:/work" \
             -w /work \
             caddy:2.8.4-alpine \
-            sh -c "caddy validate --config Caddyfile && caddy validate --config Caddyfile.dev"
+            sh -c "caddy validate --config Caddyfile --adapter caddyfile && caddy validate --config Caddyfile.dev --adapter caddyfile"

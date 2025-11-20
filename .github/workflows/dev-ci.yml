@@ -54,12 +54,12 @@ jobs:
       - name: Validate production Caddyfile
         run: |
           docker run --rm -e CADDY_ADMIN_EMAIL=ci@imperiumsolis.org -v "${{ github.workspace }}/deploy:/work" -w /work caddy:2-alpine \
-            caddy validate --config /work/Caddyfile
+            caddy validate --config /work/Caddyfile --adapter caddyfile
 
       - name: Validate dev Caddyfile
         run: |
           docker run --rm -e CADDY_ADMIN_EMAIL=ci@imperiumsolis.org -v "${{ github.workspace }}/deploy:/work" -w /work caddy:2-alpine \
-            caddy validate --config /work/Caddyfile.dev
+            caddy validate --config /work/Caddyfile.dev --adapter caddyfile
 
       - name: Build site image (no push)
         run: docker build -f deploy/Dockerfile.caddy .
