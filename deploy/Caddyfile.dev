@@ -1,13 +1,21 @@
-# Imperium Solis site
-imperiumsolis.org {
+{
+    # Disable automatic HTTPS for dev/staging to avoid ACME issues and cert errors
+    auto_https off
+}
+
+:80 {
     root * /srv/site
     encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
 }
 
-# Redirect www to bare domain
-www.imperiumsolis.org {
-    # Canonical redirect to bare domain.
-    redir https://imperiumsolis.org{uri}
-}
+# Example future staging config:
+# staging.imperiumsolis.org {
+#     root * /srv/site
+#     file_server
+#     # Optional: use Let's Encrypt staging CA during dev
+#     # tls {
+#     #     ca https://acme-staging-v02.api.letsencrypt.org/directory
+#     # }
+# }
