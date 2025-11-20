@@ -1,7 +1,26 @@
-imperiumsolis.org {
+{
+    # Global options block
+    # Use a real email so Let's Encrypt can whine at you properly if certs break.
+    email you@example.com
+
+    # Optional but nice:
+    # auto_https on
+    # admin off   # disable admin endpoint if you want it tighter
+}
+
+# Primary site – apex + www, automatic HTTPS
+imperiumsolis.org, www.imperiumsolis.org {
+    # Folder mounted from docker-compose.dev.yml:
+    #   ../site/public -> /srv/site (read-only)
     root * /srv/site
+
+    # Compression
     encode zstd gzip
 
+    # SPA / static-site routing:
+    # 1. Try exact file
+    # 2. Try directory index
+    # 3. Fall back to /index.html
     try_files {path} {path}/ /index.html
 
     file_server
