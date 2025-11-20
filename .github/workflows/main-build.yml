@@ -24,6 +24,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install site dependencies
+        working-directory: site
+        run: npm ci
+
+      - name: Verify committed static bundle
+        working-directory: site
+        run: npm run verify:bundle
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

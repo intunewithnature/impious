@@ -1,5 +1,5 @@
 node_modules
 site/node_modules
 site/.vite
-site/public/
 .DS_Store
+deploy/.env

@@ -1,7 +1,9 @@
-# Production Caddyfile for Impious (runs inside docker-compose caddy service).
-# Static lore/marketing site lives at /srv/site (bind-mounted from ../site/public).
-# Caddy handles TLS automatically; do not hard-code certificates here.
+{
+    # Production stack – ACME contact is injected via deploy/.env
+    email {$CADDY_ADMIN_EMAIL}
+}
 
+# Production · impious.io landing site (this repo → site/public)
 impious.io {
     root * /srv/site
     encode zstd gzip
@@ -9,12 +11,31 @@ impious.io {
     file_server
 }
 
+# Production · canonicalize www -> apex
 www.impious.io {
     redir https://impious.io{uri}
 }
 
-game.impious.io {
-    reverse_proxy game-api:3000
+# Production · codex.imperiumsolis.com (static payload supplied by codex repo into /srv/codex)
+codex.imperiumsolis.com {
+    root * /srv/codex
+    encode zstd gzip
+    try_files {path} {path}/ /index.html
+    file_server
 }
 
-# Add codex service here, route codex.imperiumsolis.com { root * /srv/codex }
+# Production · future multiplayer API (kept as placeholder until the service ships)
+# Expected upstream: docker-compose "game-api" service (profile gated) listening on port 3000.
+# TODO(intune): enable websocket / SSE headers + tighten timeouts once the real API exists.
+game.impious.io {
+    reverse_proxy game-api:3000 {
+        header_up Host {http.request.host}
+        header_up X-Forwarded-Proto {http.request.scheme}
+        header_up X-Real-IP {http.request.remote}
+
+        transport http {
+            compression off
+            read_buffer 0
+        }
+    }
+}

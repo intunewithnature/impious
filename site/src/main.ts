@@ -48,10 +48,34 @@ const bindCtaSubmit = () => {
   });
 };
 
+const injectEnvironmentBanner = () => {
+  const envLabel = (import.meta.env.VITE_ENV ?? 'production').toLowerCase();
+  if (envLabel === 'production') {
+    return;
+  }
+
+  const banner = document.createElement('div');
+  banner.className = `env-indicator env-indicator--${envLabel}`;
+  banner.setAttribute('role', 'status');
+  banner.setAttribute('aria-live', 'polite');
+
+  const label = document.createElement('span');
+  label.className = 'env-indicator__label';
+  label.textContent = `${envLabel.toUpperCase()} BUILD`;
+
+  const version = document.createElement('span');
+  version.className = 'env-indicator__version';
+  version.textContent = import.meta.env.VITE_BUILD_VERSION ?? 'local';
+
+  banner.append(label, version);
+  document.body.appendChild(banner);
+};
+
 const ready = () => {
   renderApp();
   updateYear();
   bindCtaSubmit();
+  injectEnvironmentBanner();
 
   initMotionControls();
   initParallax();

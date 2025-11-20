@@ -17,20 +17,46 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Seed deploy env file
+        run: cp deploy/.env.example deploy/.env
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install site dependencies
+        working-directory: site
+        run: npm ci
+
+      - name: Verify committed static bundle
+        working-directory: site
+        run: npm run verify:bundle
+
+      - name: Type-check source
+        working-directory: site
+        run: npm run check
+
       - name: docker compose config (prod)
+        env:
+          CADDY_ADMIN_EMAIL: ci@impious.io
         run: docker compose -f deploy/docker-compose.yml config
 
       - name: docker compose config (prod + dev overrides)
+        env:
+          CADDY_ADMIN_EMAIL: ci@impious.io
         run: docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml config
 
       - name: Validate production Caddyfile
         run: |
-          docker run --rm -v "${{ github.workspace }}/deploy:/work" -w /work caddy:2-alpine \
+          docker run --rm -e CADDY_ADMIN_EMAIL=ci@impious.io -v "${{ github.workspace }}/deploy:/work" -w /work caddy:2-alpine \
             caddy validate --config /work/Caddyfile
 
       - name: Validate dev Caddyfile
         run: |
-          docker run --rm -v "${{ github.workspace }}/deploy:/work" -w /work caddy:2-alpine \
+          docker run --rm -e CADDY_ADMIN_EMAIL=ci@impious.io -v "${{ github.workspace }}/deploy:/work" -w /work caddy:2-alpine \
             caddy validate --config /work/Caddyfile.dev
 
       - name: Build site image (no push)

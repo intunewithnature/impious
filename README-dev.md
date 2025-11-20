@@ -1,79 +1,70 @@
 ## Impious dev workflow
 
-This repository models the production stack that runs under `/opt/impious/deploy` on NixOS. The `dev` branch adds a couple of conveniences for local iteration while keeping the same structure.
+The `dev` branch mirrors production (`/opt/impious/deploy`) while adding a few quality-of-life options for local iteration.
 
 ### Prerequisites
 
 - Docker + Docker Compose plugin
-- Update `/etc/hosts` (or platform equivalent) so the local domains resolve to loopback:
+- Node.js 20.x (for `site/`)
+- Hostname overrides so `.test` domains resolve to loopback:
 
 ```
-127.0.0.1 impious.test www.impious.test game.impious.test
+127.0.0.1 impious.test www.impious.test codex.impious.test game.impious.test
 ```
 
-### Landing page dev loop
+### Landing page loop
 
-The lore/marketing site now ships from a Vite + TypeScript bundle in `site/src/`.
-
-1. Install deps once:
+1. Install deps:
 
    ```sh
    cd site
    npm ci
    ```
 
-2. Run the Vite dev server for instant feedback (port 5173 by default):
+2. Develop with `npm run dev` (Vite @ 5173).
+
+3. When you change `site/src`, rebuild and keep the committed bundle in sync:
 
    ```sh
-   npm run dev
+   npm run build            # production env
+   npm run build:staging    # optional: renders the staging banner locally
+   npm run verify:bundle    # fails if public/ differs from what git tracks
    ```
 
-3. Build production assets into `site/public/` whenever you want to exercise the Docker stack:
+4. Bring up the TLS-terminated stack from `deploy/` (site/public is already tracked, so no extra prep is required beyond the rebuild):
 
    ```sh
-   npm run build
+   cd deploy
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
    ```
 
-4. Bring up the TLS-terminated stack (after `npm run build`) from the `deploy/` directory:
+- Caddy terminates HTTPS on `https://impious.test:8443`, serves `../site/public`, and exposes `https://codex.impious.test:8443` if you drop codex assets under `../codex-payload-dev`.
+- A bright banner appears on every non-production build so you can’t confuse staging/test bundles with prod.
 
-   ```sh
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-   ```
+### Game / API profile
 
-- Caddy listens on `https://impious.test:8443` (self-signed via `tls internal`) and serves the freshly built `site/public`.
+- Compose already defines `game-api` with `profiles: ['game']`.
+  - Base manifest expects an image at `${GAME_API_IMAGE}`.
+  - Dev override swaps in a `hashicorp/http-echo` stub so `game.impious.test` resolves even without the real backend.
+- To exercise the future backend:
 
-### Future game / API service
+  ```sh
+  docker compose --profile game -f docker-compose.yml -f docker-compose.dev.yml up
+  ```
 
-- Target service name: `game-api`
-- Default internal port: `3000`
-- Caddy routes `game.impious.io` / `game.impious.test` to this service once it exists.
-- Place the backend/frontend code under `game-api/` at the repo root; the compose files already include `game-api` with `profiles: ['game']` so you can opt-in via `--profile game`.
-- Dev profile tips:
-  - Build context: `../game-api`
-  - Joins the shared `edge` network with Caddy
-  - Publish `localhost:3000` for hot reload overrides
-
-When you are ready to exercise it, run:
-
-```sh
-docker compose --profile game -f docker-compose.yml -f docker-compose.dev.yml up --build
-```
-
-Align the container port with the `game-api:3000` reverse proxy stub in both Caddyfiles.
+  Override the `game-api` service via an additional compose file (mount your source, run `npm run dev`, etc.).
 
 ### Hot reload suggestions
 
-- For a Node.js implementation, expose a script (e.g., `npm run dev`) that uses nodemon or Vite.
-- Mount your source: `../game-api:/app` and set `working_dir: /app`.
-- Keep environment variables in `.env` files and reference them via `env_file` to avoid hard-coding secrets.
+- Mount `../game-api:/app` and set `working_dir: /app`.
+- Use `env_file` for secrets/config.
+- Publish `3000:3000` only in dev; production stays behind Caddy.
 
 ### Cleaning up
-
-Shut down the stack with:
 
 ```sh
 cd deploy
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
-Volumes `caddy_dev_*` persist certificates; run `docker volume rm caddy_dev_data caddy_dev_config` if you want to reset the local trust store.
+Local TLS material persists in `caddy_data_dev` / `caddy_config_dev`. Remove the volumes if you need a clean CA (`docker volume rm caddy_data_dev caddy_config_dev`).
