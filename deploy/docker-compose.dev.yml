@@ -1,15 +1,18 @@
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: caddy-dev
+    container_name: caddy-staging
     restart: unless-stopped
     working_dir: /srv/site
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      # Dev / staging Caddy config
       - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      # Static site content
       - ../site/public:/srv/site:ro
+      # Separate dev volumes so we don't collide with prod cert/config
       - caddy_data_dev:/data
       - caddy_config_dev:/config
 
