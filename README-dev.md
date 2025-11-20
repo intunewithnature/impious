@@ -13,6 +13,8 @@ The `dev` branch mirrors production (`/opt/impious/deploy`) while adding a few q
 codex.impious.test codex.imperiumsolis.test game.impious.test game.imperiumsolis.test
 ```
 
+_Add the newly wired `imperiumsolis.*` + `codex.*` .test hosts above to `/etc/hosts` (or your resolver of choice) so Caddy’s TLS matcher can terminate their requests locally._
+
 ### Landing page loop
 
 1. Install deps:
@@ -39,7 +41,7 @@ codex.impious.test codex.imperiumsolis.test game.impious.test game.imperiumsolis
    docker compose -f docker-compose.yml -f docker-compose.dev.yml up
    ```
 
-- Caddy terminates HTTPS on both `:443` and `:8443`, serves `../site/public`, and exposes the codex SPA once you drop artifacts under `../codex-payload-dev`. Use the high ports (`8080/8443`) when you don’t want to bind privileged ports on your workstation.
+- Caddy terminates HTTPS on both `:443` and `:8443`, serves `../site/public`, and exposes the codex SPA from `deploy/codex/public/` by default (override with `$CODEX_PAYLOAD_DEV_PATH` if you have another build path). Use the high ports (`8080/8443`) when you don’t want to bind privileged ports on your workstation.
 - A bright banner appears on every non-production build so you can’t confuse staging/test bundles with prod.
 
 ### Game / API profile

@@ -5,8 +5,8 @@
     https_port 443
 }
 
-# Dev/Staging · imperiumsolis.test + impious.test landing copy (served from bind-mounted site/public)
-imperiumsolis.test, impious.test {
+# Dev/Staging · shared snippets for static bundles
+(site_static) {
     tls internal
     root * /srv/site
     encode zstd gzip
@@ -14,19 +14,40 @@ imperiumsolis.test, impious.test {
     file_server
 }
 
-# Dev/Staging · redirect legacy + new www hosts -> imperiumsolis.test apex
-www.imperiumsolis.test, www.impious.test {
-    tls internal
-    redir https://imperiumsolis.test{uri}
-}
-
-# Dev/Staging · codex placeholder domains mirror prod routing
-codex.impious.test, codex.imperiumsolis.test {
+(codex_static) {
     tls internal
     root * /srv/codex
     encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
+}
+
+# Dev/Staging · main landing hosts
+impious.test {
+    import site_static
+}
+
+imperiumsolis.test {
+    import site_static
+}
+
+www.imperiumsolis.test {
+    import site_static
+}
+
+# Dev/Staging · legacy www host stays redirected to impious.test
+www.impious.test {
+    tls internal
+    redir https://impious.test{uri}
+}
+
+# Dev/Staging · codex placeholder domains mirror prod routing
+codex.impious.test {
+    import codex_static
+}
+
+codex.imperiumsolis.test {
+    import codex_static
 }
 
 # Dev/Staging · future multiplayer API stub (override via GAME_API_ENABLED=1 + --profile game)
