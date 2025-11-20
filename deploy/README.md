@@ -12,14 +12,22 @@ Key paths relative to this directory:
 - `../site/public` → committed static bundle bound to `/srv/site`.
 - `../codex-payload*` → drop-in folders for codex builds (override via `.env` if needed).
 
-### Environment + secrets
+### Environment & bootstrap
 
-- Copy `deploy/.env.example` to `deploy/.env` before running compose.
-- Required variables:
-  - `CADDY_ADMIN_EMAIL` — ACME contact for impious.io certificates.
-  - `SITE_BUNDLE_PATH` — path to the tracked static bundle (default `../site/public`).
-  - `CODEX_PAYLOAD_HOST_PATH` / `CODEX_PAYLOAD_DEV_PATH` — host directories that contain `codex.imperiumsolis.com` assets (defaults point at `../codex-payload*`).
-  - `GAME_API_IMAGE` — optional override for the future multiplayer backend.
+1. Copy `deploy/.env.example` to `deploy/.env`.
+2. Fill in `CADDY_ADMIN_EMAIL` with a deliverable address before running production compose. Dev/staging can keep the placeholder `admin@impious.test`.
+3. Optional overrides (paths + game API image) can stay commented unless your server layout differs.
+
+| Context | Minimum env to edit | Notes |
+| --- | --- | --- |
+| Dev / staging | none | Defaults keep everything relative to the repo. |
+| Production | `CADDY_ADMIN_EMAIL` | Required so ACME can reach you. Override the path variables if the repo layout changes. |
+
+Run `deploy/bootstrap-server.sh` on fresh servers to:
+
+- ensure the repo really lives at `/opt/impious`,
+- seed `deploy/.env` from the example if it’s missing, and
+- pre-create `codex-payload*` directories so bind mounts never fail.
 
 ### Stack separation
 
@@ -37,8 +45,8 @@ Key paths relative to this directory:
 | --- | --- |
 | Prod refresh | `cd deploy && docker compose up -d --remove-orphans` |
 | Prod refresh with game profile | `cd deploy && docker compose --profile game up -d --remove-orphans` |
-| Dev/staging stack | `cd deploy && docker compose -f docker-compose.yml -f docker-compose.dev.yml up` |
-| Dev/staging + game stub | `cd deploy && docker compose --profile game -f docker-compose.yml -f docker-compose.dev.yml up` |
+| Dev/staging stack | `cd deploy && docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d` |
+| Dev/staging + game stub | `cd deploy && docker compose --profile game -f docker-compose.yml -f docker-compose.dev.yml up -d` |
 
 > Tip: use `scripts/deploy-example.sh` from repo root for the full “git pull → verify bundle → compose up” flow.
 
@@ -47,3 +55,9 @@ Key paths relative to this directory:
 - Never edit configs on the server. Apply changes in git, then `git pull && docker compose up -d --remove-orphans`.
 - Keep `site/public` up to date with `site/src` (`npm run verify:bundle` handles the guardrail and CI enforces it).
 - Drop codex artifacts into `${CODEX_PAYLOAD_HOST_PATH}` before enabling/announcing the domain.
+
+### Deploy ergonomics
+
+- `.env.example` is tracked with documented defaults so new clones never guess required variables.
+- `deploy/bootstrap-server.sh` creates codex payload directories and seeds environment files non-destructively.
+- `docker-compose.yml` now tolerates missing `CADDY_ADMIN_EMAIL` during dev/staging while still encouraging production overrides.

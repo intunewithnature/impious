@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Ensure deploy/.env.example exists
+        run: test -f deploy/.env.example
 
       - name: Seed deploy env file
         run: cp deploy/.env.example deploy/.env
