@@ -12,12 +12,12 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
-      volumes:
-        - ./Caddyfile:/etc/caddy/Caddyfile:ro
-        - ${SITE_BUNDLE_PATH:-../site/public}:/srv/site:ro
-        - ${CODEX_PAYLOAD_HOST_PATH:-./codex/public}:/srv/codex:ro
-        - caddy_data:/data
-        - caddy_config:/config
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${SITE_BUNDLE_PATH:-../site/public}:/srv/site:ro
+      - ${CODEX_PAYLOAD_HOST_PATH:-./codex/public}:/srv/codex:ro
+      - caddy_data:/data
+      - caddy_config:/config
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2019/config/ >/dev/null 2>&1 || exit 1"]
       interval: 30s
