@@ -1,16 +1,16 @@
 services:
-    caddy:
-      command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
-      environment:
-        CADDY_ADMIN_EMAIL: ${CADDY_ADMIN_EMAIL:-admin@impious.test}
-        GAME_API_ENABLED: ${GAME_API_ENABLED:-1}
-      ports:
-        - "80:80"
-        - "443:443"
-        - "443:443/udp"
-        - "8080:80"
-        - "8443:443"
-        - "8443:443/udp"
+  caddy:
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+    environment:
+      CADDY_ADMIN_EMAIL: ${CADDY_ADMIN_EMAIL:-admin@impious.test}
+      GAME_API_ENABLED: ${GAME_API_ENABLED:-1}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+      - "8080:80"
+      - "8443:443"
+      - "8443:443/udp"
     volumes:
       - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - ${SITE_BUNDLE_PATH:-../site/public}:/srv/site:ro
