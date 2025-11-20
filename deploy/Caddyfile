@@ -4,20 +4,17 @@
 
 impious.io {
     root * /srv/site
-
     encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
 }
 
 www.impious.io {
-    # Canonical redirect to bare domain.
     redir https://impious.io{uri}
 }
 
-# Future game/API endpoint. Keep this commented until the game service exists on
-# the docker network (service name: game-api, port: 3000).
-#
-# game.impious.io {
-#     reverse_proxy game-api:3000
-# }
+game.impious.io {
+    reverse_proxy game-api:3000
+}
+
+# Add codex service here, route codex.imperiumsolis.com { root * /srv/codex }

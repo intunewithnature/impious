@@ -19,7 +19,7 @@ The lore/marketing site now ships from a Vite + TypeScript bundle in `site/src/`
 
    ```sh
    cd site
-   npm install
+   npm ci
    ```
 
 2. Run the Vite dev server for instant feedback (port 5173 by default):
@@ -28,17 +28,16 @@ The lore/marketing site now ships from a Vite + TypeScript bundle in `site/src/`
    npm run dev
    ```
 
-3. Build production assets into `site/public/` before exercising the Docker stack:
+3. Build production assets into `site/public/` whenever you want to exercise the Docker stack:
 
    ```sh
    npm run build
    ```
 
-4. With `site/public` up to date, bring up the Caddy stack:
+4. Bring up the TLS-terminated stack (after `npm run build`) from the `deploy/` directory:
 
    ```sh
-   cd ../deploy
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
    ```
 
 - Caddy listens on `https://impious.test:8443` (self-signed via `tls internal`) and serves the freshly built `site/public`.
@@ -48,12 +47,19 @@ The lore/marketing site now ships from a Vite + TypeScript bundle in `site/src/`
 - Target service name: `game-api`
 - Default internal port: `3000`
 - Caddy routes `game.impious.io` / `game.impious.test` to this service once it exists.
-- Place the backend/frontend code under `game-api/` at the repo root; the compose files already include commented stubs that:
-  - Build from `../game-api`
-  - Join the same Docker network as Caddy
-  - (Dev) bind-mount the directory for hot reload and publish `localhost:3000`
+- Place the backend/frontend code under `game-api/` at the repo root; the compose files already include `game-api` with `profiles: ['game']` so you can opt-in via `--profile game`.
+- Dev profile tips:
+  - Build context: `../game-api`
+  - Joins the shared `edge` network with Caddy
+  - Publish `localhost:3000` for hot reload overrides
 
-When the service is ready, uncomment the relevant block in `deploy/docker-compose.yml` (prod) and `deploy/docker-compose.dev.yml` (dev). Align the container port with the `game-api:3000` reverse proxy stub in the Caddyfile(s).
+When you are ready to exercise it, run:
+
+```sh
+docker compose --profile game -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Align the container port with the `game-api:3000` reverse proxy stub in both Caddyfiles.
 
 ### Hot reload suggestions
 
