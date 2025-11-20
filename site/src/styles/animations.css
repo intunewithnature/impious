@@ -1,0 +1,84 @@
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-10%, -10%, 0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes rotateRing {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotateZ(360deg);
+  }
+}
+
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-glitch);
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.glitch::before {
+  color: rgba(79, 216, 255, 0.9);
+  animation: glitch 4s infinite;
+}
+
+.glitch::after {
+  color: rgba(255, 60, 246, 0.9);
+  animation: glitch 3s infinite;
+}
+
+@keyframes glitch {
+  0% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+  20% {
+    clip-path: inset(10% 0 15% 0);
+    transform: translate(-2px, -1px);
+  }
+  40% {
+    clip-path: inset(30% 0 20% 0);
+    transform: translate(2px, 1px);
+  }
+  60% {
+    clip-path: inset(5% 0 25% 0);
+    transform: translate(-1px, 0);
+  }
+  80% {
+    clip-path: inset(15% 0 5% 0);
+    transform: translate(1px, 2px);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+}
+
+body[data-motion='reduced'] .glitch::before,
+body[data-motion='reduced'] .glitch::after {
+  animation: none;
+}

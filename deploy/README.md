@@ -19,7 +19,7 @@ Relative paths inside the compose files resolve against this directory:
 - Networks: `impious-net` (named to keep future services consistent)
 - Volumes:
   - `caddy_data` and `caddy_config` store certificates/state
-  - Static site is mounted read-only from `../site/public`
+  - Static site is mounted read-only from `../site/public` (ensure `npm run build` has been executed in `site/` so assets are current)
 - Commands:
   - `docker compose pull`
   - `docker compose up -d --remove-orphans`

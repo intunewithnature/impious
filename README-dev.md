@@ -11,17 +11,37 @@ This repository models the production stack that runs under `/opt/impious/deploy
 127.0.0.1 impious.test www.impious.test game.impious.test
 ```
 
-### Static lore site
+### Landing page dev loop
 
-The lore/marketing site is plain HTML under `site/public/`. To preview it with the same Caddy stack as production:
+The lore/marketing site now ships from a Vite + TypeScript bundle in `site/src/`.
 
-```sh
-cd deploy
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
-```
+1. Install deps once:
 
-- Caddy listens on `https://impious.test:8443` (self-signed via `tls internal`).
-- The container bind-mounts `../site/public` read-only, so edits to `site/public/*` reload instantly.
+   ```sh
+   cd site
+   npm install
+   ```
+
+2. Run the Vite dev server for instant feedback (port 5173 by default):
+
+   ```sh
+   npm run dev
+   ```
+
+3. Build production assets into `site/public/` before exercising the Docker stack:
+
+   ```sh
+   npm run build
+   ```
+
+4. With `site/public` up to date, bring up the Caddy stack:
+
+   ```sh
+   cd ../deploy
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+   ```
+
+- Caddy listens on `https://impious.test:8443` (self-signed via `tls internal`) and serves the freshly built `site/public`.
 
 ### Future game / API service
 

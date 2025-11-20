@@ -14,6 +14,13 @@ This repository contains the application stack for the Impious project. It curre
   - Intended to live in `game-api/` with internal port `3000`
   - Routed via Caddy once implemented (`game.impious.io`)
 
+### Frontend landing page
+
+- Source lives under `site/src/` and is built with **Vite + TypeScript + Three.js** to hit the neon Roman aesthetic.
+- Run `npm install && npm run dev` from `site/` for a hot-reload preview (Vite’s dev server).
+- `npm run build` outputs production assets directly into `site/public/`, which is the directory Caddy serves. Commit the `public/` folder so production hosts can deploy without building.
+- Motion accessibility is respected via `prefers-reduced-motion`; heavier effects (parallax, hero Three.js scene) gracefully degrade.
+
 ### Paths & deployment layout
 
 - Production host expectation: repository lives at `/opt/impious/deploy`
