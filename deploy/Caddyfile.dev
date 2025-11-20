@@ -1,22 +1,13 @@
-# Local development Caddyfile for Impious.
-# Point impious.test + game.impious.test to 127.0.0.1 in /etc/hosts (or OS equivalent)
-# before running the dev docker-compose stack.
-
-impious.test, www.impious.test {
+# Imperium Solis site
+imperiumsolis.org {
     root * /srv/site
-
     encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
-
-    # Issue local certificates inside the container.
-    tls internal
 }
 
-# Future local wiring for the game/API stack. Uncomment once the game container
-# exists on the compose network (service name: game-api, port: 3000).
-#
-# game.impious.test {
-#     tls internal
-#     reverse_proxy game-api:3000
-# }
+# Redirect www to bare domain
+www.imperiumsolis.org {
+    # Canonical redirect to bare domain.
+    redir https://imperiumsolis.org{uri}
+}
