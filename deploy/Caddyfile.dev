@@ -1,6 +1,6 @@
 {
-    # Local/staging defaults – never talk to ACME
-    auto_https off
+    # Local/staging defaults – keep HTTP listeners alive without hitting ACME
+    auto_https disable_redirects
     http_port 80
     https_port 443
 }
@@ -29,12 +29,23 @@ codex.impious.test, codex.imperiumsolis.test {
     file_server
 }
 
-# Dev/Staging · future multiplayer API stub (see docker-compose.dev.yml --profile game)
+# Dev/Staging · future multiplayer API stub (override via GAME_API_ENABLED=1 + --profile game)
 game.imperiumsolis.test, game.impious.test {
     tls internal
-    reverse_proxy game-api:3000 {
-        header_up Host {http.request.host}
-        header_up X-Forwarded-Proto {http.request.scheme}
-        header_up X-Real-IP {http.request.remote}
+    @game_api_live expression {env.GAME_API_ENABLED} == "1"
+
+    handle @game_api_live {
+        reverse_proxy game-api:3000 {
+            header_up Host {http.request.host}
+            header_up X-Forwarded-Proto {http.request.scheme}
+            header_up X-Real-IP {http.request.remote}
+        }
+    }
+
+    handle {
+        respond 200 {
+            body "{\"status\":\"unavailable\",\"message\":\"Game API placeholder (dev).\"}"
+            close
+        }
     }
 }

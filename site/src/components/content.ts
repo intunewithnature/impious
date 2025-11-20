@@ -89,11 +89,11 @@ export const ctaCopy: CtaCopy = {
   eyebrow: 'Call to Arms',
   title: 'Enlist before the eclipse',
   description: 'Drop your signal to receive alpha summons, devlogs, and clandestine lore drops.',
-  placeholder: 'legionary@impious.io',
+  placeholder: 'legionary@imperiumsolis.org',
   links: [
     { label: 'Discord Cohort', href: 'https://discord.gg' },
     { label: 'GitHub Intel', href: 'https://github.com/impious' },
-    { label: 'Contact the Senate', href: 'mailto:hello@impious.io' },
+    { label: 'Contact the Senate', href: 'mailto:hello@imperiumsolis.org' },
   ],
 };
 
@@ -101,6 +101,6 @@ export const footerCopy: FooterCopy = {
   tagline: 'Impious Imperium. Forged in Roman neon.',
   links: [
     { label: 'Back to summit', href: '#top' },
-    { label: 'Status', href: 'https://status.impious.io' },
+    { label: 'Status', href: 'https://status.imperiumsolis.org' },
   ],
 };

@@ -4,7 +4,7 @@ The `impious` repo is the single source of truth for:
 
 - The Vite/Three.js marketing site that ultimately ships as static files.
 - Production/staging Docker + Caddy stacks consumed by NixHQ.
-- Integration points for future `game.imperiumsolis.org` and `codex.imperiumsolis.com` properties.
+- Integration points for future `game.imperiumsolis.com` and `codex.imperiumsolis.com` properties.
 
 If it affects imperiumsolis.org routing or deployment, it lives here.
 
@@ -40,7 +40,7 @@ Build invariants:
 | --- | --- | --- |
 | `imperiumsolis.org` | this repo | Serves `site/public` via Caddy (`/srv/site`) |
 | `www.imperiumsolis.org` | this repo | 301 redirect to `https://imperiumsolis.org{uri}` |
-| `game.imperiumsolis.org` | future game repo | Reverse-proxy stub to `game-api:3000` (compose `--profile game`) |
+| `game.imperiumsolis.com` | future game repo | Safe JSON stub by default; set `GAME_API_ENABLED=1` + `--profile game` to proxy `game-api:3000` |
 | `codex.imperiumsolis.com` | codex repo | Static file server rooted at `/srv/codex` (bind mount `CODEX_PAYLOAD_HOST_PATH`) |
 
 Local/staging equivalents live in `Caddyfile.dev` using `.test` domains (`imperiumsolis.test`, `www.imperiumsolis.test`, `impious.test`, `www.impious.test`, `codex.impious.test`, `codex.imperiumsolis.test`, `game.imperiumsolis.test`, `game.impious.test`) with `tls internal`.
@@ -49,8 +49,8 @@ Local/staging equivalents live in `Caddyfile.dev` using `.test` domains (`imperi
 
 - `deploy/docker-compose.yml` is the production manifest.
   - `caddy`: stock `caddy:2.8-alpine`, binds `./Caddyfile`, `../site/public`, and `${CODEX_PAYLOAD_HOST_PATH:-../codex-payload}`. TLS state persists in `caddy_data`/`caddy_config`. Requires `deploy/.env` with `CADDY_ADMIN_EMAIL`.
-  - `game-api`: disabled unless you pass `--profile game`. Override `GAME_API_IMAGE` once the backend exists.
-- `deploy/docker-compose.dev.yml` overlays local defaults: binds `Caddyfile.dev`, exposes `8080/8443`, and provides a `hashicorp/http-echo` placeholder for `--profile game`.
+  - `game-api`: disabled unless you pass `--profile game`. Set `GAME_API_ENABLED=1` (and optionally override `GAME_API_IMAGE`) once the backend exists so Caddy proxies instead of returning the JSON stub.
+- `deploy/docker-compose.dev.yml` overlays local defaults: binds `Caddyfile.dev`, keeps the 80/443 bindings, adds `8080/8443`, and provides a `hashicorp/http-echo` placeholder for `--profile game`.
 - `deploy/.env.example` documents every env knob (admin email, site bundle path, codex payload paths, optional game image).
 - `scripts/deploy-example.sh` describes the human/bot deployment order: update git, `npm run verify:bundle`, `docker compose pull`, `docker compose up -d --remove-orphans [--profile game]`.
 
