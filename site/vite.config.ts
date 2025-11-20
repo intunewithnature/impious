@@ -6,8 +6,6 @@ const resolveBuildVersion = (env: Record<string, string>) => {
     process.env.VITE_BUILD_VERSION ||
     env.BUILD_VERSION ||
     process.env.BUILD_VERSION ||
-    env.GITHUB_SHA ||
-    process.env.GITHUB_SHA ||
     env.npm_package_version ||
     process.env.npm_package_version ||
     'local'
