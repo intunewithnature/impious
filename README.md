@@ -4,9 +4,9 @@ The `impious` repo is the single source of truth for:
 
 - The Vite/Three.js marketing site that ultimately ships as static files.
 - Production/staging Docker + Caddy stacks consumed by NixHQ.
-- Integration points for future `game.impious.io` and `codex.imperiumsolis.com` properties.
+- Integration points for future `game.imperiumsolis.org` and `codex.imperiumsolis.com` properties.
 
-If it affects impious.io routing or deployment, it lives here.
+If it affects imperiumsolis.org routing or deployment, it lives here.
 
 ### Repository layout
 
@@ -38,12 +38,12 @@ Build invariants:
 
 | Domain | Owner | Behaviour |
 | --- | --- | --- |
-| `impious.io` | this repo | Serves `site/public` via Caddy (`/srv/site`) |
-| `www.impious.io` | this repo | 301 redirect to `https://impious.io{uri}` |
-| `game.impious.io` | future game repo | Reverse-proxy stub to `game-api:3000` (compose `--profile game`) |
+| `imperiumsolis.org` | this repo | Serves `site/public` via Caddy (`/srv/site`) |
+| `www.imperiumsolis.org` | this repo | 301 redirect to `https://imperiumsolis.org{uri}` |
+| `game.imperiumsolis.org` | future game repo | Reverse-proxy stub to `game-api:3000` (compose `--profile game`) |
 | `codex.imperiumsolis.com` | codex repo | Static file server rooted at `/srv/codex` (bind mount `CODEX_PAYLOAD_HOST_PATH`) |
 
-Local/staging equivalents live in `Caddyfile.dev` using `.test` domains (`impious.test`, `www.impious.test`, `codex.impious.test`, `game.impious.test`) with `tls internal`.
+Local/staging equivalents live in `Caddyfile.dev` using `.test` domains (`imperiumsolis.test`, `www.imperiumsolis.test`, `impious.test`, `www.impious.test`, `codex.impious.test`, `codex.imperiumsolis.test`, `game.imperiumsolis.test`, `game.impious.test`) with `tls internal`.
 
 ### Docker + deployment
 
