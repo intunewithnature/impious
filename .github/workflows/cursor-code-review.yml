@@ -29,20 +29,30 @@ jobs:
             ln -s "$HOME/.cursor/bin/cursor" "$HOME/.cursor/bin/cursor-agent"
           fi
 
-      - name: Configure Git identity
-        run: |
-          git config user.name "Cursor Agent"
-          git config user.email "cursoragent@example.com"
+        - name: Configure Git identity
+          run: |
+            git config user.name "Cursor Agent"
+            git config user.email "cursoragent@example.com"
 
-      - name: Run Cursor review
-        env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cursor-agent review \
-            --github-token="$GITHUB_TOKEN" \
-            --repo="${{ github.repository }}" \
-            --pr="${{ github.event.number }}" \
-            --diff-ref="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}" \
-            --prompt="Act as a strict but concise code reviewer for the Impious project. Focus on security issues, reliability problems, and anything that could take the site or game down. Keep comments short and actionable (1–2 sentences), and avoid nitpicking formatting unless it hides a real bug."
+        - name: Run Cursor review
+          env:
+            CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            CURSOR_CMD="cursor-agent"
+            if ! command -v "$CURSOR_CMD" >/dev/null 2>&1; then
+              if command -v cursor >/dev/null 2>&1; then
+                CURSOR_CMD="cursor"
+              else
+                echo "Neither cursor-agent nor cursor found on PATH" >&2
+                exit 127
+              fi
+            fi
+
+            "$CURSOR_CMD" review \
+              --github-token="$GITHUB_TOKEN" \
+              --repo="${{ github.repository }}" \
+              --pr="${{ github.event.number }}" \
+              --diff-ref="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}" \
+              --prompt="Act as a strict but concise code reviewer for the Impious project. Focus on security issues, reliability problems, and anything that could take the site or game down. Keep comments short and actionable (1–2 sentences), and avoid nitpicking formatting unless it hides a real bug."
 
