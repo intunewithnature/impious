@@ -1,12 +1,13 @@
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: caddy-staging
+    container_name: caddy-dev
     restart: unless-stopped
     working_dir: /srv/site
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
+      - "8443:443/udp"
     volumes:
       # Dev / staging Caddy config
       - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
@@ -15,7 +16,13 @@ services:
       # Separate dev volumes so we don't collide with prod cert/config
       - caddy_data_dev:/data
       - caddy_config_dev:/config
+    networks:
+      - impious-net
 
 volumes:
   caddy_data_dev:
   caddy_config_dev:
+
+networks:
+  impious-net:
+    name: impious-net
