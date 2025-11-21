@@ -25,6 +25,9 @@ jobs:
         run: |
           curl -fsSL https://cursor.sh/install.sh | bash
           echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+          if [ -f "$HOME/.cursor/bin/cursor" ] && [ ! -f "$HOME/.cursor/bin/cursor-agent" ]; then
+            ln -s "$HOME/.cursor/bin/cursor" "$HOME/.cursor/bin/cursor-agent"
+          fi
 
       - name: Configure Git identity
         run: |
