@@ -7,24 +7,25 @@
     <title>Impious Imperium</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Inter:wght@400;600;700&family=Unica+One&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;600&family=Unica+One&display=swap" rel="stylesheet" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
+    <div class="noise-overlay" aria-hidden="true"></div>
     <div class="scanlines" aria-hidden="true"></div>
     <div class="grid-horizon" aria-hidden="true"></div>
 
     <header class="hero" id="top">
       <div class="hero__layers" aria-hidden="true">
-        <div class="layer layer--stars" data-depth="0.15"></div>
-        <div class="layer layer--aurora" data-depth="0.25"></div>
-        <div class="layer layer--city" data-depth="0.35"></div>
-        <div class="layer layer--columns" data-depth="0.45"></div>
+        <div class="layer layer--stars" data-depth="0.10"></div>
+        <div class="layer layer--aurora" data-depth="0.20"></div>
+        <div class="layer layer--city" data-depth="0.30"></div>
+        <div class="layer layer--columns" data-depth="0.40"></div>
       </div>
       <div class="hero__content">
         <div class="hero__badge">Neon Imperium Dispatch</div>
-        <h1 class="glitch" data-glitch="Impious Imperium">Impious Imperium</h1>
+        <h1 class="glitch" data-glitch="Impious Imperium" data-scramble>Impious Imperium</h1>
         <p>Where Roman ritual collides with cyberpunk conspiracies. Gather your cohort, unmask the impostors, and seize the throne beneath a neon dawn.</p>
         <div class="hero__cta">
           <a class="btn btn--primary" href="#lore">Decode the Lore</a>
@@ -44,7 +45,7 @@
       <section id="lore" class="section section--lore" aria-label="Imperium lore">
         <div class="section__header">
           <p class="eyebrow">Lore Codex</p>
-          <h2>Scrolls of a Neon Senate</h2>
+          <h2 data-scramble>Scrolls of a Neon Senate</h2>
           <p>The Impious Senate augments prophecy with silicon augurs. Every district in the sprawl whispers a different truth.</p>
         </div>
         <div class="lore__grid">
@@ -69,7 +70,7 @@
       <section id="game" class="section section--game" aria-label="Game preview">
         <div class="section__header">
           <p class="eyebrow">Game Systems</p>
-          <h2>The Arena of Deception</h2>
+          <h2 data-scramble>The Arena of Deception</h2>
           <p>Social deduction evolves with faction tech, asynchronous rituals, and cross-realm dossiers.</p>
         </div>
         <div class="game__grid">
@@ -104,19 +105,19 @@
       <section id="roadmap" class="section section--roadmap" aria-label="Roadmap">
         <div class="section__header">
           <p class="eyebrow">Roadmap</p>
-          <h2>Pillars of the Neon Senate</h2>
+          <h2 data-scramble>Pillars of the Neon Senate</h2>
         </div>
         <div class="timeline">
           <article class="pillar" data-observe>
-            <h3>Q1 – Lore Vault</h3>
+            <h3>Q1 &ndash; Lore Vault</h3>
             <p>Landing page v1, player codex, public API keys for read-only lore scrapes.</p>
           </article>
           <article class="pillar" data-observe>
-            <h3>Q2 – Closed Arena</h3>
+            <h3>Q2 &ndash; Closed Arena</h3>
             <p>Invite-only alpha, faction dashboards, Discord cohort bridge.</p>
           </article>
           <article class="pillar" data-observe>
-            <h3>Q3 – Open Legion</h3>
+            <h3>Q3 &ndash; Open Legion</h3>
             <p>Global events, battle pass experiments, on-chain badge proofs.</p>
           </article>
         </div>
@@ -125,7 +126,7 @@
       <section id="call-to-arms" class="section section--cta" aria-label="Call to arms">
         <div class="cta__content" data-observe>
           <p class="eyebrow">Call to Arms</p>
-          <h2>Enlist before the eclipse</h2>
+          <h2 data-scramble>Enlist before the eclipse</h2>
           <p>Drop your signal to receive alpha summons, devlogs, and clandestine lore drops.</p>
           <form class="cta__form">
             <label class="sr-only" for="enlist-email">Email</label>

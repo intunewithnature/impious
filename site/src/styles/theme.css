@@ -1,62 +1,49 @@
 :root {
+  --space-950: #020005;
   --space-900: #050114;
-  --space-800: #120735;
-  --space-700: #1c0f4a;
-  --pink-500: #ff3cf6;
-  --pink-300: #ff8ff7;
-  --blue-400: #4fd8ff;
-  --blue-600: #2998ff;
-  --orange-400: #ffb347;
-  --gold-400: #fddc5c;
-  --text-primary: #f8f4ff;
-  --text-muted: rgba(248, 244, 255, 0.7);
-  --surface-glass: rgba(12, 2, 29, 0.65);
-  --surface-elevated: rgba(20, 6, 50, 0.9);
-  --border-glow: rgba(255, 255, 255, 0.12);
-  --blur-lg: blur(30px);
-  --blur-sm: blur(8px);
-  --shadow-neon: 0 0 25px rgba(255, 60, 246, 0.35);
-  --shadow-blue: 0 0 22px rgba(63, 176, 255, 0.35);
+  --space-800: #0f0529;
+  --space-700: #180a38;
+  
+  /* Cyber-Roman Palette */
+  --neon-pink: #ff00ff;
+  --neon-cyan: #00ffff;
+  --imperial-gold: #ffd700;
+  --imperial-gold-dim: #bfa100;
+  --blood-crimson: #ff2a2a;
+
+  --text-primary: #f0f0f0;
+  --text-bright: #ffffff;
+  --text-muted: rgba(240, 240, 255, 0.6);
+  
+  --surface-glass: rgba(15, 5, 41, 0.7);
+  --surface-border: rgba(255, 255, 255, 0.1);
+  --surface-border-highlight: rgba(255, 215, 0, 0.3);
+
+  --font-display: 'Cinzel Decorative', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-tech: 'Unica One', monospace;
+
+  --blur-backdrop: blur(20px);
+}
+
+/* Procedural Noise Overlay */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
 body::after {
+  /* Vignette */
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(120deg, rgba(255, 0, 153, 0.06), transparent, rgba(255, 196, 69, 0.05));
-  mix-blend-mode: screen;
-  z-index: -1;
-}
-
-.scanlines {
-  position: fixed;
-  inset: 0;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 50%, transparent 50%);
-  background-size: 100% 3px;
-  opacity: 0.15;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.grid-horizon {
-  position: fixed;
-  inset: auto 0 0;
-  height: 50vh;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.4) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 2px, transparent 2px);
-  background-size: 100% 40px, 40px 100%;
-  background-position: center bottom;
-  opacity: 0.05;
-  transform: perspective(700px) rotateX(65deg);
-  transform-origin: bottom;
-  pointer-events: none;
-  z-index: 0;
-}
-
-body[data-motion="reduced"] .layer,
-body[data-motion="reduced"] .glow,
-body[data-motion="reduced"] .floating {
-  animation: none !important;
-  transform: none !important;
+  background: radial-gradient(circle at 50% 50%, transparent 60%, var(--space-950) 100%);
+  z-index: 90;
 }
