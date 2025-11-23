@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMPIOUS.io // ENLIST</title>
+    <title>IMPIOUS.io // WATCH OUT</title>
     <style>
         /* --- MASTER PALETTE & VARS --- */
         :root {
@@ -20,13 +20,9 @@
             --ritual-red: #FF1F4E;
             --magenta-start: #FF3B7F;
             --magenta-end: #D73CFF;
-            --input-radius: 12px;
             
             /* TYPEFACE SPLIT */
-            /* 1. Imperial UI (Body, Inputs, Buttons) */
             --font-sans: "Liberation Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            
-            /* 2. Terminal Data (Labels, Micro-copy) */
             --font-mono: "Consolas", "Monaco", monospace;
         }
 
@@ -39,10 +35,9 @@
             height: 100%;
             background-color: var(--void-black);
             overflow: hidden;
-            
-            /* BODY DEFAULTS TO SANS (Imperial UI) */
             font-family: var(--font-sans);
             
+            /* CENTER EVERYTHING */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -101,12 +96,12 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* --- FOREGROUND FORM STACK (Z-INDEX 10+) --- */
+        /* --- FOREGROUND TEXT (Z-INDEX 10+) --- */
 
         .impious-terminal {
             position: relative;
             width: 100%;
-            max-width: 420px;
+            max-width: 600px; /* Wider for the message */
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -116,11 +111,12 @@
         }
 
         .brand-title {
-            font-family: var(--font-sans); /* Explicitly Sans */
-            font-size: clamp(36px, 6vw, 56px);
+            font-family: var(--font-sans); 
+            /* Slightly larger max size for the warning */
+            font-size: clamp(42px, 8vw, 72px); 
             font-weight: 700;
-            margin: 0 0 10px 0;
-            letter-spacing: -0.02em; /* Tighter, more modern */
+            margin: 0;
+            letter-spacing: -0.02em; 
             color: var(--cool-white);
             text-transform: uppercase;
             position: relative;
@@ -164,92 +160,6 @@
             100% { clip-path: inset(0 0 0 0); }
         }
 
-        .tagline {
-            font-family: var(--font-sans);
-            font-size: clamp(14px, 2vw, 18px);
-            font-weight: 400;
-            margin: 0 0 32px 0;
-            letter-spacing: 0.05em;
-            color: var(--cool-white-dim);
-        }
-
-        .form-stack {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        input[type="email"] {
-            width: 100%;
-            height: 52px;
-            background: rgba(11, 13, 18, 0.3); 
-            border: 1px solid rgba(221, 251, 255, 0.12);
-            border-radius: var(--input-radius);
-            color: var(--cool-white);
-            padding: 0 16px;
-            
-            /* SANS for readability in the UI */
-            font-family: var(--font-sans); 
-            font-size: 16px;
-            transition: all 0.2s ease;
-            outline: none;
-            backdrop-filter: blur(4px);
-        }
-
-        input[type="email"]::placeholder { color: rgba(221, 251, 255, 0.35); }
-
-        input[type="email"]:focus {
-            background: rgba(11, 13, 18, 0.6);
-            border-color: rgba(88, 230, 224, 0.8);
-            box-shadow: 0 0 15px rgba(88, 230, 224, 0.15);
-            caret-color: var(--imperial-cyan);
-        }
-
-        button.submit-btn {
-            width: 100%;
-            height: 52px;
-            background: linear-gradient(90deg, var(--magenta-start), var(--magenta-end));
-            border: none;
-            border-radius: var(--input-radius);
-            color: #07080B;
-            font-weight: 700;
-            font-size: 15px;
-            letter-spacing: 0.08em;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            margin-top: 4px;
-            /* SANS for button command */
-            font-family: var(--font-sans); 
-        }
-
-        button.submit-btn:hover {
-            filter: brightness(1.12);
-            box-shadow: 0 0 0 1px rgba(88, 230, 224, 0.4);
-        }
-
-        button.submit-btn:active {
-            transform: scale(0.99);
-            filter: brightness(0.95);
-        }
-
-        button.submit-btn.success {
-            background: var(--imperial-cyan);
-            color: #fff;
-            pointer-events: none;
-        }
-
-        .micro-trust {
-            margin-top: 16px;
-            font-size: 12px;
-            opacity: 0.5;
-            letter-spacing: 0.05em;
-            color: var(--cool-white);
-            
-            /* MONO for tiny technical disclaimer */
-            font-family: var(--font-mono);
-        }
     </style>
 </head>
 <body>
@@ -261,38 +171,10 @@
     <div class="layer-grain"></div>
 
     <div class="impious-terminal">
-        <h1 class="brand-title" data-text="IMPIOUS.io">IMPIOUS.io</h1>
-        <p class="tagline">Don’t look now.</p>
-
-        <form class="form-stack" onsubmit="event.preventDefault(); handleEnlist();">
-            <input type="email" id="emailInput" placeholder="signal@source.com" required autocomplete="off">
-            <button type="submit" id="submitBtn" class="submit-btn">Enlist</button>
-        </form>
-
-        <div class="micro-trust">No spam.</div>
+        <h1 class="brand-title" data-text="Watch out.">Watch out.</h1>
     </div>
 
     <script>
-        // --- FORM HANDLER ---
-        function handleEnlist() {
-            const input = document.getElementById('emailInput');
-            const btn = document.getElementById('submitBtn');
-            
-            btn.innerText = "CONNECTING...";
-            
-            setTimeout(() => {
-                btn.classList.add('success');
-                btn.innerHTML = "REGISTERED &nbsp; &#10003;";
-                input.style.borderColor = "var(--imperial-cyan)";
-                input.blur();
-
-                setTimeout(() => {
-                    window.location.href = "/watch-out/";
-                }, 600);
-            }, 800);
-        }
-
-        // --- LATTICE ENGINE ---
         const canvas = document.getElementById('cathedral-deck');
         const ctx = canvas.getContext('2d', { alpha: false }); 
 
@@ -535,9 +417,7 @@
                 const labelX = this.x + nodeSize + 6;
                 const labelY = this.y + 3;
                 
-                // --- FONT FIX: STRICT MONOSPACE FOR DATA ---
                 ctx.font = '10px "Consolas", "Monaco", monospace';
-                
                 const labelText = isTraitor ? `[TRAITOR ${this.id}]` : `[SUBJECT ${this.id}]`;
                 
                 if (isTraitor) {
