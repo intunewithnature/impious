@@ -43,6 +43,6 @@ app.post('/enlist', (req, res) => {
 app.get('/healthz', (_req, res) => res.send('ok'));
 
 const port = process.env.PORT || 3000;
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
   console.log(`Enlist API listening on port ${port}`);
 });
