@@ -275,21 +275,44 @@
     <script>
         // --- FORM HANDLER ---
         function handleEnlist() {
-            const input = document.getElementById('emailInput');
-            const btn = document.getElementById('submitBtn');
-            
-            btn.innerText = "CONNECTING...";
+          const input = document.getElementById('emailInput');
+          const btn = document.getElementById('submitBtn');
+          const email = input.value.trim();
+
+          if (!email || !email.includes('@')) return (input.focus(), input.select());
+
+          btn.innerText = "CONNECTING...";
+          btn.disabled = true;
+
+          fetch('/enlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          })
+          .then(res => {
+            if (!res.ok) throw new Error('rejected');
+            return res.json();
+          })
+          .then(() => {
+            btn.classList.add('success');
+            btn.innerHTML = "REGISTERED &nbsp; ✓";
+            input.style.borderColor = "var(--imperial-cyan)";
             
             setTimeout(() => {
-                btn.classList.add('success');
-                btn.innerHTML = "REGISTERED &nbsp; &#10003;";
-                input.style.borderColor = "var(--imperial-cyan)";
-                input.blur();
-
-                setTimeout(() => {
-                    window.location.href = "/watch-out/";
-                }, 600);
-            }, 800);
+              window.location.href = '/watch-out.html';
+            }, 600);
+          })
+          .catch(() => {
+            btn.disabled = false;
+            btn.innerText = "REJECTED";
+            btn.style.background = "var(--ritual-red)";
+            input.style.borderColor = "var(--ritual-red)";
+            setTimeout(() => {
+              btn.innerText = "Enlist";
+              btn.style.background = "";
+              input.style.borderColor = "";
+            }, 2000);
+          });
         }
 
         // --- LATTICE ENGINE ---
