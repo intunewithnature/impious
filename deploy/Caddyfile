@@ -1,15 +1,21 @@
-# Production Caddyfile for Impious (runs inside docker-compose caddy service).
-# Static lore/marketing site lives at /srv/site (bind-mounted from ../site/public).
-# Caddy handles TLS automatically; do not hard-code certificates here.
-
 impious.io {
     root * /srv/site
 
+    log {
+        output stdout
+        format console
+    }
+
     @enlist path /enlist*
-    reverse_proxy @enlist enlist-api:3000
+    handle @enlist {
+        header X-Impious-Enlist "1"
+        reverse_proxy enlist-api:3000
+    }
 
     @health path /healthz
-    reverse_proxy @health enlist-api:3000
+    handle @health {
+        reverse_proxy enlist-api:3000
+    }
 
     encode zstd gzip
     try_files {path} {path}/ /index.html
@@ -17,13 +23,5 @@ impious.io {
 }
 
 www.impious.io {
-    # Canonical redirect to bare domain.
     redir https://impious.io{uri}
 }
-
-# Future game/API endpoint. Keep this commented until the game service exists on
-# the docker network (service name: game-api, port: 3000).
-#
-# game.impious.io {
-#     reverse_proxy game-api:3000
-# }
