@@ -5,6 +5,14 @@
 impious.io {
     root * /srv/site
 
+    handle /enlist* {
+        reverse_proxy enlist-api:3000
+    }
+
+    handle /healthz {
+        reverse_proxy enlist-api:3000
+    }
+
     encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
