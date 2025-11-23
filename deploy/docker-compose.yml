@@ -15,10 +15,20 @@ services:
       - caddy_config:/config
     networks:
       - impious-net
+  enlist-api:
+    build: ../email-api
+    restart: unless-stopped
+    environment:
+      - DB_FILE=/data/emails.db
+    volumes:
+      - enlist_data:/data
+    networks:
+      - impious-net
 
 volumes:
   caddy_data:
   caddy_config:
+  enlist_data:
 
 networks:
   impious-net:
