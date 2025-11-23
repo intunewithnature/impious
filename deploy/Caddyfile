@@ -1,7 +1,6 @@
 impious.io {
     root * /srv/site
 
-<<<<<<< HEAD
     log {
         output stdout
         format console
@@ -21,18 +20,6 @@ impious.io {
     encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
-=======
-    route {
-        # API first, in-order, terminal when matched
-        reverse_proxy /enlist* enlist-api:3000
-        reverse_proxy /healthz enlist-api:3000
-
-        # everything else = static site
-        encode zstd gzip
-        try_files {path} {path}/ /index.html
-        file_server
-    }
->>>>>>> fafee7a (fix(caddy): force ordered routing for /enlist and /healthz via route block)
 }
 
 www.impious.io {

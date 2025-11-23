@@ -1,60 +1,60 @@
-### Impious deploy directory
+## Deploy directory
 
-This folder is copied as-is to `/opt/impious/deploy/deploy` on every server. The repository root is `/opt/impious/deploy`, so deployments run commands from this directory:
+This folder mirrors `/opt/impious/deploy` on the production VPS. Paths inside the compose file resolve relative to that directory, so:
 
-```sh
-cd /opt/impious/deploy/deploy
+- `./Caddyfile` → `/opt/impious/deploy/Caddyfile`
+- `../site/public` → `/opt/impious/site/public` (built ahead of time on the host)
+
+## Services in production
+
+- **caddy** (`caddy-prod` container)  
+  Serves `impious.io` from `/srv/site`, terminates TLS with ACME, applies SPA fallback, and proxies `/enlist*` plus `/healthz` to the API.
+
+- **enlist-api** (`deploy-enlist-api-1`)  
+  Node/Express email capture API with a SQLite datastore mounted at `enlist_data:/data`. Health endpoint lives at `/healthz`.
+
+Both services run on the shared `impious-net` network and cap container logs via the json-file driver to keep `/var/lib/docker` under control.
+
+## Configuration (.env)
+
+`docker compose` in this directory loads `.env` automatically. We pin the API image with `ENLIST_API_TAG`, which matches a Git commit SHA (or a manual override) and maps to `ghcr.io/intunewithnature/impious-enlist-api:<tag>`.
+
+```
+ENLIST_API_TAG=REPLACE_WITH_SHA_OR_VERSION
 ```
 
-Relative paths inside the compose files resolve against this location:
+Copy `deploy/.env.example` to `.env` and fill in the desired tag before running compose locally or on the VPS.
 
-- `./Caddyfile*` → `/opt/impious/deploy/deploy/Caddyfile*`
-- `../site/public` → `/opt/impious/deploy/site/public`
+## Deployment workflow
 
-### Stack separation
+- **Manual steps**
+  1. `cd /opt/impious/deploy`
+  2. Update the git working tree (or copy the repo) so that Caddy, compose, and site assets match the desired revision.
+  3. Edit `.env` so `ENLIST_API_TAG` points to the image you want (`git rev-parse HEAD` works well).
+  4. Run:
+     ```sh
+     docker compose pull
+     docker compose up -d --remove-orphans
+     ```
 
-- **Production (vps host)** uses `docker-compose.yml` together with `Caddyfile`. Those files reference the real domains (`impious.io`, etc.) and allow Caddy to obtain certificates automatically.
-- **Staging / dev (test-server)** uses `docker-compose.dev.yml` together with `Caddyfile.dev`. That Caddyfile disables automatic HTTPS and serves everything over HTTP so the staging stack never interferes with the production certificates.
-- Both stacks mount the same `../site/public` build output, so be sure to run `npm run build` in `site/` before updating either environment.
+- **GitHub Actions (`.github/workflows/main-build.yml`)**
+  - Builds `email-api/Dockerfile` on every push to `main`.
+  - Pushes the image to `ghcr.io/intunewithnature/impious-enlist-api` tagged with the commit SHA (and `latest`).
+  - SSHes into the VPS using `PROD_SSH_HOST/USER/KEY` secrets, writes `/opt/impious/deploy/.env` with `ENLIST_API_TAG=${{ github.sha }}`, then runs `docker compose pull && docker compose up -d`.
 
-### Production stack (vps)
+This keeps production tied to an immutable image per commit and gives us an audit trail of what is running.
 
-- Compose file: `docker-compose.yml`
-- Service: `caddy-prod` proxy + static site with automatic HTTPS
-- Volumes: `caddy_data` / `caddy_config` for cert state, plus the read-only `../site/public` mount
-- Network: `impious-net`
-- Typical refresh:
+## Rollbacks
 
-  ```sh
-  docker compose pull
-  docker compose up -d --remove-orphans
-  ```
+1. Decide which image tag (previous commit SHA) you want.
+2. Update `/opt/impious/deploy/.env` to that value:
+   ```sh
+   echo "ENLIST_API_TAG=<old-sha>" | sudo tee /opt/impious/deploy/.env
+   ```
+3. Re-run `docker compose pull && docker compose up -d` in `/opt/impious/deploy`.
 
-### Staging / dev stack (test-server)
+Because images live in GHCR, the rollback is instant and does not require rebuilding.
 
-- Compose file: `docker-compose.dev.yml`
-- Service: `caddy-staging` serving the same static assets via HTTP on ports 80/443
-- Caddy config: `Caddyfile.dev` with `auto_https off` and an optional commented block for future staging domains
-- Volumes: `caddy_data_dev` / `caddy_config_dev` keep staging state separate from production
-- NixOS `caddy-stack` on `test-server` is configured with `services.caddyStack.composeFile = "docker-compose.dev.yml"`, so running the service uses this dev compose file automatically.
-- Manual run/refresh (works locally too):
+## Dev / staging notes
 
-  ```sh
-  docker compose -f docker-compose.dev.yml pull
-  docker compose -f docker-compose.dev.yml up -d --remove-orphans
-  ```
-
-You can confirm that you are hitting the dev stack by curling for the HTML marker:
-
-```sh
-curl -s http://localhost/ | grep DEV-STAGING-MARKER
-```
-
-### Quick reference
-
-| Scenario | Command |
-| --- | --- |
-| Prod refresh (vps) | `cd deploy && docker compose up -d --remove-orphans` |
-| Staging refresh (test-server) | `cd deploy && docker compose -f docker-compose.dev.yml up -d --remove-orphans` |
-
-Keep all config changes in git so the servers can `git pull` plus the appropriate compose command to receive updates.
+`docker-compose.dev.yml` + `Caddyfile.dev` remain available for local/staging previews of the static site only. They intentionally omit the enlist API and do **not** consume `.env`. Keeping this separation prevents accidental interference with production certificates. If you use the dev stack, build the site (`npm run build` in `site/`) beforehand so that `../site/public` contains the latest assets.

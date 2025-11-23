@@ -13,15 +13,30 @@ services:
       - ../site/public:/srv/site:ro
       - caddy_data:/data
       - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - impious-net
   enlist-api:
-    build: ../email-api
+    image: ghcr.io/intunewithnature/impious-enlist-api:${ENLIST_API_TAG}
     restart: unless-stopped
     environment:
       - DB_FILE=/data/emails.db
     volumes:
       - enlist_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - impious-net
 
