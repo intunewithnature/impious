@@ -24,6 +24,11 @@ Impious servers run Docker directly on NixOS hosts managed by NixHQ. The git che
 
 ## Refreshing environments
 
+### Production DNS
+
+- Point the `impious.io` and `www.impious.io` A records at the new Vultr VPS (`144.202.54.88`). Reuse the same IP for any additional prod hostnames (e.g., `game.impious.io`) as they launch.
+- Use a low TTL (≈300s) while switching traffic so you can fall back quickly if needed, then raise it again after verification.
+
 ### Production (VPS running impious.io)
 
 ```sh
@@ -35,7 +40,7 @@ docker compose up -d --remove-orphans
 
 - Uses `deploy/docker-compose.yml`.
 - Publishes ports `80/443/443-udp` on the host.
-- Caddy issues/renews certificates for `impious.io` and `www.impious.io` automatically.
+- Caddy issues/renews certificates for `impious.io` and `www.impious.io` automatically once DNS targets `144.202.54.88`.
 
 ### Staging / Dev server (test-server)
 
