@@ -18,13 +18,13 @@ const db = new Database(DB_PATH, (err) => {
       email TEXT UNIQUE NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-  `);
+  `, () => console.log('Email API live – SQLite @ ' + DB_PATH));
 });
 
 app.post('/enlist', (req, res) => {
-  const { email } = req.body || {};
+  const { email } = req.body;
   if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 320) {
-    return res.status(400).json({ success: false, error: 'invalid email' });
+    return res.status(400).json({ success: false, error: 'Invalid email' });
   }
 
   db.run(
@@ -32,16 +32,17 @@ app.post('/enlist', (req, res) => {
     [email.trim().toLowerCase()],
     function (err) {
       if (err) {
-      console.error(err);
-      return res.status(500).json({ success: false });
+        console.error(err);
+        return res.status(500).json({ success: false });
+      }
+      res.json({ success: true });
     }
-    console.log(`ENLISTED → ${email}`);
-    res.json({ success: true });
-  }
-);
+  );
 });
 
-app.get('/healthz', (_, res) => res.send('ok'));
+app.get('/healthz', (_req, res) => res.send('ok'));
 
 const port = process.env.PORT || 3000;
-app.listen(port, '0.0.0.0', () => console.log(`Enlist API ready on ${port}`));
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Enlist API listening on port ${port}`);
+});
