@@ -4,6 +4,11 @@ services:
     container_name: caddy-prod
     restart: unless-stopped
     working_dir: /srv/site
+    environment:
+      - SITE_ADDRESS=impious.io
+      - WWW_ADDRESS=www.impious.io
+      - GAME_ADDRESS=game.impious.io
+      - TLS_OPTS=admin@impious.io
     ports:
       - "80:80"
       - "443:443"

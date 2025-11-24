@@ -6,7 +6,7 @@ GitHub Actions coordinate validation, image publishing, and automated reviews. N
 
 | Workflow | File | Trigger | Purpose |
 | --- | --- | --- | --- |
-| Dev CI | `.github/workflows/dev-ci.yml` | `push` / `pull_request` on `dev` | Fast validation of compose manifests, both Caddyfiles, and the site image build. |
+| Dev CI | `.github/workflows/dev-ci.yml` | `push` / `pull_request` on `dev` | Fast validation of compose manifests, the shared Caddyfile, and the site image build. |
 | Main build & publish | `.github/workflows/main-build.yml` | `push` to `main`, any `v*` tag, manual `workflow_dispatch` | Builds and pushes the production-ready Caddy+site image (and, conditionally, the future `game-api` image) to GHCR. |
 | Cursor Code Review | `.github/workflows/cursor-code-review.yml` | PR events (opened, sync, reopened, ready) | Runs Cursor’s reviewer bot on non-draft PRs for actionable feedback. |
 
@@ -16,7 +16,7 @@ Steps executed on every `dev` change:
 
 1. `docker compose -f deploy/docker-compose.yml config` to ensure the production compose file parses.
 2. `docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml config` to confirm dev overrides still merge cleanly.
-3. Two `caddy validate` invocations inside the upstream `caddy:2-alpine` container (one for `Caddyfile`, one for `Caddyfile.dev`).
+3. A `caddy validate` invocation inside the upstream `caddy:2-alpine` container for the shared `deploy/Caddyfile`.
 4. `docker build -f deploy/Dockerfile.caddy .` to catch regressions in the static-site image.
 
 Artifacts are not pushed; failures block merges into `dev`.

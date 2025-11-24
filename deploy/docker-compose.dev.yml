@@ -4,13 +4,18 @@ services:
     container_name: caddy-dev
     restart: unless-stopped
     working_dir: /srv/site
+    environment:
+      - SITE_ADDRESS=impious.test
+      - WWW_ADDRESS=www.impious.test
+      - GAME_ADDRESS=game.impious.test
+      - TLS_OPTS=internal
     ports:
       - "8080:80"
       - "8443:443"
       - "8443:443/udp"
     volumes:
-      # Dev / staging Caddy config
-      - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      # Shared parameterized Caddy config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       # Static site content
       - ../site/public:/srv/site:ro
       # Separate dev volumes so we don't collide with prod cert/config
