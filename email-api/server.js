@@ -1,8 +1,10 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import sqlite3 from 'sqlite3';
 const { Database } = sqlite3;
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(express.json());
 
 const DB_PATH = process.env.DB_FILE || '/data/emails.db';
@@ -21,7 +23,14 @@ const db = new Database(DB_PATH, (err) => {
   `, () => console.log('Email API live – SQLite @ ' + DB_PATH));
 });
 
-app.post('/enlist', (req, res) => {
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.post('/enlist', limiter, (req, res) => {
   const { email, company } = req.body;
   if (company) {
     console.log('HONEYPOT_TRIGGERED:', req.ip, email);
