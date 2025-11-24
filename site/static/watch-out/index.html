@@ -436,6 +436,11 @@
         }
 
         function init() {
+            if (window.impious && window.impious.track) {
+                window.impious.track('enlist_success_view');
+            } else {
+                console.log('[Analytics-Static] enlist_success_view');
+            }
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
             nodes = [];

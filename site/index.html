@@ -275,6 +275,9 @@
     <script>
         // --- FORM HANDLER ---
         function handleEnlist() {
+            if (window.impious && window.impious.track) {
+                window.impious.track('enlist_submit');
+            }
             const input = document.getElementById('emailInput');
             const btn = document.getElementById('submitBtn');
             
