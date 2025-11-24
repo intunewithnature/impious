@@ -22,7 +22,11 @@ const db = new Database(DB_PATH, (err) => {
 });
 
 app.post('/enlist', (req, res) => {
-  const { email } = req.body;
+  const { email, company } = req.body;
+  if (company) {
+    console.log('HONEYPOT_TRIGGERED:', req.ip, email);
+    return res.json({ success: true });
+  }
   if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 320) {
     return res.status(400).json({ success: false, error: 'Invalid email' });
   }
