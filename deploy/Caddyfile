@@ -15,7 +15,10 @@
     @enlist path /enlist*
     handle @enlist {
         header X-Impious-Enlist "1"
-        reverse_proxy enlist-api:3000
+        reverse_proxy enlist-api:3000 {
+            # Explicitly forward the client IP so Express rate-limiting works correctly
+            header_up X-Forwarded-For {remote_host}
+        }
     }
 
     @health path /healthz
