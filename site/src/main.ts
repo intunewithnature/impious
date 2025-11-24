@@ -1,10 +1,18 @@
 import './styles/main.css';
 
+import { track } from './modules/analytics';
 import { initMotionControls } from './modules/motion';
 import { initParallax } from './modules/parallax';
 import { initRevealObserver } from './modules/observer';
 import { initLaurelScene } from './modules/laurelScene';
 import { initScramble } from './modules/scramble';
+
+if (typeof window !== 'undefined') {
+  window.impious = {
+    ...(window.impious ?? {}),
+    track,
+  };
+}
 
 const initHeroInteraction = () => {
   const hero = document.querySelector('.hero');
@@ -22,6 +30,7 @@ const initHeroInteraction = () => {
 };
 
 const ready = () => {
+  track('landing_view');
   initMotionControls();
   initParallax();
   initRevealObserver();
