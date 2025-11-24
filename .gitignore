@@ -2,3 +2,4 @@ node_modules
 site/node_modules
 site/.vite
 .DS_Store
+exports/
