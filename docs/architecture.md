@@ -24,28 +24,24 @@ Impious is a mono-repo that bundles the static marketing site, container images,
 ### Future `game-api`
 - Reserved service name in compose/Caddy comments.
 - Target container port `3000`; will be reverse-proxied through Caddy at `game.impious.io` / `game.impious.test`.
-- Until implemented, Caddy’s dev file responds with a stub so DNS and routing can be validated without a backend.
+- Until implemented, the shared Caddyfile responds with a stub so DNS and routing can be validated without a backend.
 
 ## Networking and ports
 
 | Service | Environment | Host ports | Container ports | TLS behavior |
 | --- | --- | --- | --- | --- |
 | `caddy` | Production (`docker-compose.yml`) | `80`, `443`, `443/udp` | `80`, `443` | Automatic HTTPS via Let’s Encrypt for `impious.io` + `www.impious.io`. |
-| `caddy` | Dev/Staging (`docker-compose.dev.yml`) | `8080`, `8443`, `8443/udp` | `80`, `443` | `auto_https` disabled globally; individual sites call `tls internal` for loopback domains to avoid hitting Let’s Encrypt. |
+| `caddy` | Dev/Staging (`docker-compose.dev.yml`) | `8080`, `8443`, `8443/udp` | `80`, `443` | Shares the same Caddyfile but overrides env vars so `.test` hostnames use `tls internal` and never hit Let’s Encrypt. |
 | `game-api` (future) | Any | Not exposed directly | `3000` | Only reachable behind Caddy on `impious-net`. |
 
 All services attach to the user-defined `impious-net` so that future containers (game servers, APIs, admin tooling) can communicate without publishing extra host ports.
 
 ## Caddy routing
 
-- `deploy/Caddyfile` (production):
-  - `impious.io` serves `/srv/site`.
-  - `www.impious.io` permanently redirects to the apex domain.
-  - Commented `game.impious.io` block documents the reverse proxy that will come online once the `game-api` container exists.
-- `deploy/Caddyfile.dev` (dev/staging):
-  - Reuses the same site snippet for `impious.test`, `www.impious.test`, `localhost`, and optional `staging.impious.io`.
-  - Adds a `/healthz` endpoint and an `X-Impious-Env: dev` response header so automation can spot the dev stack.
-  - Includes a `game.impious.test` stub that will turn into `reverse_proxy game-api:3000` during backend development.
+- `deploy/Caddyfile` is parameterized via `SITE_ADDRESS`, `WWW_ADDRESS`, `GAME_ADDRESS`, and `TLS_OPTS`, letting prod and dev share identical routing logic.
+- `{$SITE_ADDRESS}` serves `/srv/site`, proxies `/enlist*` and `/healthz` to the enlist API, and enables static asset fallbacks.
+- `{$WWW_ADDRESS}` permanently redirects to the apex domain.
+- `{$GAME_ADDRESS}` keeps a stub response until the `game-api` container exists, at which point the block will switch to `reverse_proxy game-api:3000`.
 
 ## Environments
 

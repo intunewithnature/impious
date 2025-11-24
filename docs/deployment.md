@@ -75,7 +75,6 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-or
   docker compose -f deploy/docker-compose.yml config
   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml config
   docker run --rm -v "$PWD/deploy:/work" -w /work caddy:2-alpine caddy validate --config /work/Caddyfile
-  docker run --rm -v "$PWD/deploy:/work" -w /work caddy:2-alpine caddy validate --config /work/Caddyfile.dev
   ```
 
 - Inspect runtime state:
@@ -92,4 +91,4 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-or
   docker exec caddy-prod caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
   ```
 
-- If certificates fail on staging, confirm you are hitting the dev stack (look for the `X-Impious-Env: dev` header) and that `Caddyfile.dev` still has `tls internal` for the affected hostnames.
+- If certificates fail on staging, confirm you are hitting the dev stack (look for the `X-Impious-Env: dev` header) and that `deploy/docker-compose.dev.yml` still sets `TLS_OPTS=internal` for the affected hostnames.

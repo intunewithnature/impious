@@ -1,4 +1,9 @@
-impious.io {
+{
+    # Global options
+}
+
+# Main Site
+{$SITE_ADDRESS} {
     root * /srv/site
 
     log {
@@ -6,6 +11,7 @@ impious.io {
         format console
     }
 
+    # API Routes
     @enlist path /enlist*
     handle @enlist {
         header X-Impious-Enlist "1"
@@ -20,8 +26,18 @@ impious.io {
     encode zstd gzip
     try_files {path} {path}/ /index.html
     file_server
+
+    # TLS: "internal" for dev, email address for prod
+    tls {$TLS_OPTS}
 }
 
-www.impious.io {
-    redir https://impious.io{uri}
+# WWW Redirect
+{$WWW_ADDRESS} {
+    redir https://{$SITE_ADDRESS}{uri}
+}
+
+# Future Game API Stub
+{$GAME_ADDRESS} {
+    tls {$TLS_OPTS}
+    respond "game-api stubbed" 200
 }

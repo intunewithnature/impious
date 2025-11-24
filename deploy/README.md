@@ -57,4 +57,4 @@ Because images live in GHCR, the rollback is instant and does not require rebuil
 
 ## Dev / staging notes
 
-`docker-compose.dev.yml` + `Caddyfile.dev` remain available for local/staging previews of the static site only. They intentionally omit the enlist API and do **not** consume `.env`. Keeping this separation prevents accidental interference with production certificates. If you use the dev stack, build the site (`npm run build` in `site/`) beforehand so that `../site/public` contains the latest assets.
+`docker-compose.dev.yml` overlays the production defaults with staging-friendly ports, `.test` hostnames, and `TLS_OPTS=internal` while still mounting the shared `Caddyfile`. The dev stack intentionally omits the enlist API and does **not** consume `.env`, which keeps experiments isolated from production certificates. If you use the dev stack, build the site (`npm run build` in `site/`) beforehand so that `../site/public` contains the latest assets.

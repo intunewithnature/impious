@@ -8,8 +8,7 @@ Impious runs on NixOS hosts that NixHQ provisions. Docker itself is managed by N
 - Runtime directory: `/opt/impious/deploy/deploy`
   - `deploy/docker-compose.yml` (production stack)
   - `deploy/docker-compose.dev.yml` (dev/staging overrides)
-  - `deploy/Caddyfile` (production TLS + routing)
-  - `deploy/Caddyfile.dev` (dev/staging TLS + routing)
+  - `deploy/Caddyfile` (parameterized TLS + routing, shared by all environments)
   - `../site/public` (resolved to `/opt/impious/deploy/site/public`)
 - State volumes (Docker named volumes on each host):
   - Production: `caddy_data`, `caddy_config`
@@ -44,14 +43,13 @@ Impious runs on NixOS hosts that NixHQ provisions. Docker itself is managed by N
 
 ## TLS behavior
 
-- Production (`deploy/Caddyfile`):
-  - Automatic HTTP→HTTPS with real certificates via Let’s Encrypt.
-  - `www.impious.io` redirects to the apex domain.
-- Dev/Staging (`deploy/Caddyfile.dev`):
-  - Global `auto_https off` so staging never attempts Let’s Encrypt.
-  - Loopback domains (`impious.test`, `www.impious.test`, `game.impious.test`, `localhost`) call `tls internal`, generating self-signed certs trusted by Caddy only.
-  - Optional `http://staging.impious.io` / `http://stage.impious.io` hosts ride plain HTTP to avoid cert conflicts.
-  - `/healthz` endpoint and `X-Impious-Env: dev` header make it simple for Nix healthchecks to verify the stack.
+- `deploy/Caddyfile` reads `SITE_ADDRESS`, `WWW_ADDRESS`, `GAME_ADDRESS`, and `TLS_OPTS` from the environment so the same template can serve prod and dev stacks.
+- Production (`deploy/docker-compose.yml`):
+  - Uses the real domains (`impious.io`, `www.impious.io`, `game.impious.io`) and sets `TLS_OPTS=admin@impious.io` so Let’s Encrypt can issue certificates.
+  - `www` hostnames redirect to the apex domain.
+- Dev/Staging (`docker-compose.dev.yml` overlay):
+  - Overrides hostnames with the `.test` domains and sets `TLS_OPTS=internal` so Caddy issues self-signed certificates via its internal CA.
+  - Keeps the future game/API endpoint stubbed until that container exists.
 
 ## Production vs staging summary
 
