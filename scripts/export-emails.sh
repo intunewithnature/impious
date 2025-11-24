@@ -8,9 +8,9 @@ mkdir -p "${EXPORT_DIR}"
 DATE_PREFIX="$(date +%F)"
 OUTPUT_FILE="${EXPORT_DIR}/emails-${DATE_PREFIX}.csv"
 
+# Auto-detect volume name (NixOS service vs Manual compose)
 VOLUME_CANDIDATES=("caddy-stack_enlist_data" "deploy_enlist_data")
 VOLUME_NAME=""
-
 for candidate in "${VOLUME_CANDIDATES[@]}"; do
   if docker volume inspect "$candidate" >/dev/null 2>&1; then
     VOLUME_NAME="$candidate"
@@ -19,29 +19,12 @@ for candidate in "${VOLUME_CANDIDATES[@]}"; do
 done
 
 if [[ -z "${VOLUME_NAME}" ]]; then
-  AVAILABLE_VOLUMES="$(docker volume ls --format '{{.Name}}' || true)"
-  {
-    echo "Error: could not find an email data volume (looked for: ${VOLUME_CANDIDATES[*]})." >&2
-    echo "Available volumes:" >&2
-    if [[ -n "${AVAILABLE_VOLUMES}" ]]; then
-      echo "${AVAILABLE_VOLUMES}" >&2
-    else
-      echo "(none detected)" >&2
-    fi
-  }
+  echo "Error: could not find email volume. Checked: ${VOLUME_CANDIDATES[*]}" >&2
   exit 1
 fi
 
+echo "Exporting from volume: $VOLUME_NAME"
 docker run --rm -v "${VOLUME_NAME}:/data:ro" alpine /bin/sh -c \
   "apk add --no-cache sqlite >/dev/null && sqlite3 -header -csv /data/emails.db \"SELECT id, email, created_at FROM emails ORDER BY id DESC;\"" \
   > "${OUTPUT_FILE}"
-
-ROW_COUNT=0
-if [[ -s "${OUTPUT_FILE}" ]]; then
-  TOTAL_LINES="$(wc -l < "${OUTPUT_FILE}")"
-  if [[ "${TOTAL_LINES}" -gt 1 ]]; then
-    ROW_COUNT=$((TOTAL_LINES - 1))
-  fi
-fi
-
-echo "✅ Exported ${ROW_COUNT} rows to ${OUTPUT_FILE}"
+echo "✅ Exported to ${OUTPUT_FILE}"

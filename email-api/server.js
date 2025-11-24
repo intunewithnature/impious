@@ -23,6 +23,11 @@ const db = new Database(DB_PATH, (err) => {
   `, () => console.log('Email API live – SQLite @ ' + DB_PATH));
 });
 
+app.use((req, res, next) => {
+  console.log(`[Request] IP: ${req.ip} | X-Fwd: ${req.headers['x-forwarded-for']}`);
+  next();
+});
+
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 10,
