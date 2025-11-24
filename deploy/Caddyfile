@@ -11,28 +11,26 @@
         format console
     }
 
-    # API Routes
-    @enlist path /enlist*
-    handle @enlist {
-        header X-Impious-Enlist "1"
-        reverse_proxy enlist-api:3000 {
-            # Explicitly forward the client IP so Express rate-limiting works correctly
+    encode zstd gzip
+
+    route {
+        # --- API Routes MUST run before file_server ---
+        @enlist path /enlist*
+        reverse_proxy @enlist enlist-api:3000 {
             header_up X-Forwarded-For {remote_host}
         }
+
+        @health path /healthz
+        reverse_proxy @health enlist-api:3000
+
+        # --- Static site fallback ---
+        try_files {path} {path}/ /index.html
+        file_server
     }
 
-    @health path /healthz
-    handle @health {
-        reverse_proxy enlist-api:3000
-    }
-
-    encode zstd gzip
-    try_files {path} {path}/ /index.html
-    file_server
-
-    # TLS: "internal" for dev, email address for prod
     tls {$TLS_OPTS}
 }
+
 
 # WWW Redirect
 {$WWW_ADDRESS} {
